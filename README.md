@@ -196,6 +196,23 @@ Configured using `vercel.json`.
 
 ## 🛠️ Setup Instructions
 
+### Quick Setup (Recommended)
+
+Run the automated setup script:
+
+```bash
+./setup.sh
+```
+
+This will:
+- Start PostgreSQL in Docker
+- Generate Prisma client
+- Run database migrations
+
+Then follow the prompts to configure your Google OAuth credentials.
+
+### Manual Setup
+
 ### 1️⃣ Clone the Repository
 
 ```bash
@@ -203,32 +220,67 @@ git clone https://github.com/yourusername/leetcode-group-tracker
 cd leetcode-group-tracker
 ```
 
-### 2️⃣ Install Dependencies (Bun)
+### 2️⃣ Install Dependencies
 
 ```bash
-bun install
+npm install
 ```
 
-### 3️⃣ Environment Variables
+### 3️⃣ Start PostgreSQL Database
 
-Create a `.env` file:
+Using Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+Or see [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed instructions.
+
+### 4️⃣ Configure Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Update `.env` with your credentials:
 
 ```env
-DATABASE_URL=
+DATABASE_URL="postgresql://postgres:password@localhost:5432/leetgrind?schema=public"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ```
 
-### 4️⃣ Setup Database
+**Generate NEXTAUTH_SECRET:**
+```bash
+openssl rand -base64 32
+```
+
+**Get Google OAuth credentials:** See [AUTH_SETUP.md](AUTH_SETUP.md) for detailed instructions.
+
+### 5️⃣ Setup Database
+
+Generate Prisma client and run migrations:
 
 ```bash
-bunx prisma migrate dev
-bunx prisma generate
+npx prisma generate
+npx prisma migrate dev --name init
 ```
 
-### 5️⃣ Run Locally
+### 6️⃣ Run Locally
 
 ```bash
-bun dev
+npm run dev
 ```
+
+Visit:
+- **App**: http://localhost:3000
+- **Signup**: http://localhost:3000/signup
+- **Login**: http://localhost:3000/login
+
 
 ---
 
