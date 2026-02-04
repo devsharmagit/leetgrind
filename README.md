@@ -1,36 +1,306 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 LeetCode Group Tracker
 
-## Getting Started
+A web application to **track, rank, and analyze LeetCode progress of a group**.  
+The app automatically collects daily stats, stores historical snapshots, and generates insights like leaderboards, inactive users, and biggest gainers.
 
-First, run the development server:
+---
+
+## ✨ Features
+
+- 📊 **Leaderboard** (rank & problems solved)
+- 😥 **Zero-Solved Detection**
+- 💤 **Inactive Members** (last N days)
+- 🚀 **Biggest Gainers** (rank & problems solved)
+- 🏆 **Most Impressive Profile**
+- 📅 **Historical Tracking via Snapshots**
+- 🔄 **Automated Daily Updates**
+- 📤 **Export-ready summaries** (WhatsApp / CSV / Screenshot)
+
+---
+
+## 🧠 Core Concept
+
+Instead of storing only the current LeetCode stats, this app stores **daily immutable snapshots** for each user.
+
+> 📌 Snapshots are never updated — a new snapshot is created every day.
+
+This enables:
+- Progress comparison over time
+- Rank improvement tracking
+- Activity / inactivity detection
+- Time-range analytics
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js (App Router) |
+| Styling | Tailwind CSS + shadcn/ui |
+| Backend | Next.js API Routes |
+| Database | PostgreSQL |
+| ORM | Prisma |
+| Package Manager | **Bun** |
+| Cron Jobs | GitHub Actions / Vercel Cron |
+| Hosting | Vercel |
+| DB Hosting | Supabase / Neon |
+
+---
+
+## 📂 Project Structure
+
+```
+leetcode-group-tracker/
+├── app/
+│   ├── page.tsx                # Dashboard
+│   ├── leaderboard/
+│   ├── inactive/
+│   ├── gainers/
+│   └── api/
+│       ├── users/
+│       ├── snapshots/
+│       ├── leaderboard/
+│       ├── inactive/
+│       └── gainers/
+├── lib/
+│   ├── leetcode.ts             # LeetCode fetch logic
+│   ├── scoring.ts              # Impressive profile scoring
+│   └── date.ts
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/
+├── scripts/
+│   └── collectSnapshots.ts     # Daily snapshot collector
+├── README.md
+└── .env
+```
+
+---
+
+## 🧩 Database Models
+
+### User
+
+```ts
+User {
+  id
+  name
+  leetcodeUsername
+  createdAt
+}
+```
+
+### UserSnapshot
+
+```ts
+UserSnapshot {
+  id
+  userId
+  rank
+  problemsSolved
+  easySolved
+  mediumSolved
+  hardSolved
+  snapshotDate
+  createdAt
+}
+```
+
+---
+
+## 🔄 Data Collection Flow
+
+1. Admin adds users (name + LeetCode username)
+2. Daily cron job runs
+3. For each user:
+   - Fetch LeetCode profile data
+   - Extract rank and problem stats
+   - Insert a new snapshot
+4. APIs compute analytics from snapshots
+
+---
+
+## 📌 Business Logic Overview
+
+### 🏆 Leaderboard
+
+- Fetch latest snapshot per user
+- Sort by rank (ascending)
+
+### 😥 Zero Solved Users
+
+```ts
+latestSnapshot.problemsSolved === 0
+```
+
+### 💤 Inactive Users
+
+A user is considered inactive if there is no increase in solved problems in the last N days.
+
+```ts
+maxSolved(lastNDays) - minSolved(lastNDays) === 0
+```
+
+### 🚀 Biggest Gainers
+
+```ts
+solvedDelta = solved(today) - solved(fromDate)
+rankDelta   = rank(fromDate) - rank(today)
+```
+
+Sorted by:
+- `solvedDelta` (descending)
+- `rankDelta` (descending)
+
+### 🏆 Most Impressive Profile
+
+Example scoring formula:
+
+```ts
+score =
+  (1_000_000 / rank) * 0.5 +
+  problemsSolved * 1 +
+  hardSolved * 3
+```
+
+---
+
+## 🔌 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/leaderboard` | Ranked leaderboard |
+| GET | `/api/inactive?days=30` | Inactive users |
+| GET | `/api/zero-solved` | Users with zero solved |
+| GET | `/api/gainers?from=YYYY-MM-DD` | Biggest gainers |
+| POST | `/api/users` | Add a new user |
+
+---
+
+## ⏰ Cron Job Setup
+
+### Option 1: GitHub Actions
+
+Runs once per day and triggers:
+
+```
+/api/snapshots/collect
+```
+
+### Option 2: Vercel Cron
+
+Configured using `vercel.json`.
+
+---
+
+## 🛠️ Setup Instructions
+
+### 1️⃣ Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+git clone https://github.com/yourusername/leetcode-group-tracker
+cd leetcode-group-tracker
+```
+
+### 2️⃣ Install Dependencies (Bun)
+
+```bash
+bun install
+```
+
+### 3️⃣ Environment Variables
+
+Create a `.env` file:
+
+```env
+DATABASE_URL=
+```
+
+### 4️⃣ Setup Database
+
+```bash
+bunx prisma migrate dev
+bunx prisma generate
+```
+
+### 5️⃣ Run Locally
+
+```bash
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🧪 TODO / Task List
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Backend
 
-## Learn More
+- [ ] Prisma schema & migrations
+- [ ] LeetCode data fetcher
+- [ ] Snapshot collection cron job
+- [ ] Analytics APIs
+- [ ] Error handling & logging
 
-To learn more about Next.js, take a look at the following resources:
+### Frontend
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [ ] Dashboard layout
+- [ ] Leaderboard table
+- [ ] Gainers & inactive views
+- [ ] Sorting & filtering
+- [ ] Export utilities
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Infrastructure
 
-## Deploy on Vercel
+- [ ] Cron setup
+- [ ] Production database
+- [ ] Rate-limit protection
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🚧 Known Challenges
+
+- LeetCode does not provide an official public API
+- Rate limiting & scraping protection
+- Username changes
+- Timezone consistency for daily snapshots
+
+---
+
+## 🌱 Future Enhancements
+
+- Multiple groups / cohorts
+- WhatsApp / Discord bot integration
+- Weekly automated summaries
+- Streak tracking
+- Difficulty-wise analytics
+- Public shareable leaderboards
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome.  
+Please open an issue before making major changes.
+
+---
+
+## ⭐ Why This Project Matters
+
+This project demonstrates:
+
+- Time-series data modeling
+- Backend analytics & cron jobs
+- Clean Next.js API design
+- Modern tooling with Bun
+- Real-world product thinking
+
+---
+
+## 📄 License
+
+MIT
+
+---
+
+**Built with ❤️ and Bun**
