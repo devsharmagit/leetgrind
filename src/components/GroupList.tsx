@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { deleteGroup } from "@/actions/groups";
+import { deleteGroup } from "@/app/actions/groups";
 
 interface Group {
   id: number;

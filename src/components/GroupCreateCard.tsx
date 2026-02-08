@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { createGroup } from "@/actions/groups";
+import { createGroup } from "@/app/actions/groups";
 
 export default function GroupCreateCard() {
   const router = useRouter();

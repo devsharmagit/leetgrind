@@ -1,78 +1,53 @@
-import { redirect } from "next/navigation";
-import { auth, signOut } from "@/auth";
-import { prisma } from "@/lib/prisma";
-import GroupCreateCard from "@/components/GroupCreateCard";
-import GroupList from "@/components/GroupList";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getGroups } from "@/app/actions/groups"
+import DashboardClient from '@/components/dashboard/dashboard-client';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const signOutAction = async () => {
-  "use server";
-  await signOut({ redirectTo: "/" });
-};
-
-export default async function DashboardPage() {
+async function DashboardContent() {
   const session = await auth();
-
+  
   if (!session?.user?.email) {
-    redirect("/login");
+    redirect('/login');
   }
 
-  const ownedGroups = await prisma.group.findMany({
-    where: {
-      owner: {
-        email: session.user.email,
-      },
-    },
-    orderBy: {
-      id: "desc",
-    },
-    select: {
-      id: true,
-      name: true,
-      _count: {
-        select: {
-          users: true,
-        },
-      },
-    },
-  });
+  const result = await getGroups();
 
-  const displayName = session.user.name ?? "there";
-
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="border-b border-black">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-black">Dashboard</h1>
-            <p className="text-sm text-gray-600">Welcome, {displayName}</p>
-          </div>
-          <form action={signOutAction}>
-            <Button
-              variant="outline"
-              className="border-black text-black hover:bg-gray-100"
-            >
-              Logout
-            </Button>
-          </form>
-        </div>
+  if (!result.success) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-red-500">Failed to load groups</p>
       </div>
+    );
+  }
 
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
-        <GroupCreateCard />
+  return <DashboardClient groups={result.data || []} userId={result.currentUserId ?? null} />;
+}
 
-        <Card className="border-black bg-white">
-          <CardHeader>
-            <CardTitle className="text-black">Your groups</CardTitle>
-            <CardDescription className="text-gray-600">
-              Groups you created.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <GroupList groups={ownedGroups} />
-          </CardContent>
-        </Card>
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-48 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Suspense fallback={<DashboardSkeleton />}>
+          <DashboardContent />
+        </Suspense>
       </div>
     </div>
   );
