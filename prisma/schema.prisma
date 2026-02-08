@@ -53,6 +53,11 @@ model DailyStat {
   leetcodeProfileId Int
   date              DateTime
   totalSolved       Int
+  easySolved        Int              @default(0)
+  mediumSolved      Int              @default(0)
+  hardSolved        Int              @default(0)
+  ranking           Int              @default(0)
+  contestRating     Int              @default(0)
   rankingPoints     Int
 
   leetcodeProfile   LeetcodeProfile  @relation(fields: [leetcodeProfileId], references: [id])

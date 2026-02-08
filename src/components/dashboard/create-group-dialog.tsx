@@ -55,20 +55,20 @@ export default function CreateGroupDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700 sm:max-w-md">
+      <DialogContent className="bg-neutral-900 border-neutral-800 sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-slate-100 text-2xl font-bold">
+            <DialogTitle className="text-white text-2xl font-bold">
               Create New Group
             </DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogDescription className="text-neutral-400">
               Create a group to track LeetCode progress with your team
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-6">
             <div className="space-y-2">
-              <Label htmlFor="groupName" className="text-slate-300">
+              <Label htmlFor="groupName" className="text-neutral-300">
                 Group Name
               </Label>
               <Input
@@ -76,7 +76,7 @@ export default function CreateGroupDialog({
                 placeholder="e.g., Weekend Warriors, FAANG Prep Team"
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/20"
+                className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-neutral-600 focus:ring-neutral-600"
                 autoFocus
               />
             </div>
@@ -88,14 +88,14 @@ export default function CreateGroupDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+              className="bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-700 hover:text-white"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !groupName.trim()}
-              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg shadow-cyan-500/30"
+              className="bg-white text-black hover:bg-neutral-200"
             >
               {isSubmitting ? 'Creating...' : 'Create Group'}
             </Button>

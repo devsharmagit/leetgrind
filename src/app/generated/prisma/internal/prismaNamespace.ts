@@ -857,6 +857,11 @@ export const DailyStatScalarFieldEnum = {
   leetcodeProfileId: 'leetcodeProfileId',
   date: 'date',
   totalSolved: 'totalSolved',
+  easySolved: 'easySolved',
+  mediumSolved: 'mediumSolved',
+  hardSolved: 'hardSolved',
+  ranking: 'ranking',
+  contestRating: 'contestRating',
   rankingPoints: 'rankingPoints'
 } as const
 

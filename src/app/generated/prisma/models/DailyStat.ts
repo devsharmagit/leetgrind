@@ -30,6 +30,11 @@ export type DailyStatAvgAggregateOutputType = {
   id: number | null
   leetcodeProfileId: number | null
   totalSolved: number | null
+  easySolved: number | null
+  mediumSolved: number | null
+  hardSolved: number | null
+  ranking: number | null
+  contestRating: number | null
   rankingPoints: number | null
 }
 
@@ -37,6 +42,11 @@ export type DailyStatSumAggregateOutputType = {
   id: number | null
   leetcodeProfileId: number | null
   totalSolved: number | null
+  easySolved: number | null
+  mediumSolved: number | null
+  hardSolved: number | null
+  ranking: number | null
+  contestRating: number | null
   rankingPoints: number | null
 }
 
@@ -45,6 +55,11 @@ export type DailyStatMinAggregateOutputType = {
   leetcodeProfileId: number | null
   date: Date | null
   totalSolved: number | null
+  easySolved: number | null
+  mediumSolved: number | null
+  hardSolved: number | null
+  ranking: number | null
+  contestRating: number | null
   rankingPoints: number | null
 }
 
@@ -53,6 +68,11 @@ export type DailyStatMaxAggregateOutputType = {
   leetcodeProfileId: number | null
   date: Date | null
   totalSolved: number | null
+  easySolved: number | null
+  mediumSolved: number | null
+  hardSolved: number | null
+  ranking: number | null
+  contestRating: number | null
   rankingPoints: number | null
 }
 
@@ -61,6 +81,11 @@ export type DailyStatCountAggregateOutputType = {
   leetcodeProfileId: number
   date: number
   totalSolved: number
+  easySolved: number
+  mediumSolved: number
+  hardSolved: number
+  ranking: number
+  contestRating: number
   rankingPoints: number
   _all: number
 }
@@ -70,6 +95,11 @@ export type DailyStatAvgAggregateInputType = {
   id?: true
   leetcodeProfileId?: true
   totalSolved?: true
+  easySolved?: true
+  mediumSolved?: true
+  hardSolved?: true
+  ranking?: true
+  contestRating?: true
   rankingPoints?: true
 }
 
@@ -77,6 +107,11 @@ export type DailyStatSumAggregateInputType = {
   id?: true
   leetcodeProfileId?: true
   totalSolved?: true
+  easySolved?: true
+  mediumSolved?: true
+  hardSolved?: true
+  ranking?: true
+  contestRating?: true
   rankingPoints?: true
 }
 
@@ -85,6 +120,11 @@ export type DailyStatMinAggregateInputType = {
   leetcodeProfileId?: true
   date?: true
   totalSolved?: true
+  easySolved?: true
+  mediumSolved?: true
+  hardSolved?: true
+  ranking?: true
+  contestRating?: true
   rankingPoints?: true
 }
 
@@ -93,6 +133,11 @@ export type DailyStatMaxAggregateInputType = {
   leetcodeProfileId?: true
   date?: true
   totalSolved?: true
+  easySolved?: true
+  mediumSolved?: true
+  hardSolved?: true
+  ranking?: true
+  contestRating?: true
   rankingPoints?: true
 }
 
@@ -101,6 +146,11 @@ export type DailyStatCountAggregateInputType = {
   leetcodeProfileId?: true
   date?: true
   totalSolved?: true
+  easySolved?: true
+  mediumSolved?: true
+  hardSolved?: true
+  ranking?: true
+  contestRating?: true
   rankingPoints?: true
   _all?: true
 }
@@ -196,6 +246,11 @@ export type DailyStatGroupByOutputType = {
   leetcodeProfileId: number
   date: Date
   totalSolved: number
+  easySolved: number
+  mediumSolved: number
+  hardSolved: number
+  ranking: number
+  contestRating: number
   rankingPoints: number
   _count: DailyStatCountAggregateOutputType | null
   _avg: DailyStatAvgAggregateOutputType | null
@@ -227,6 +282,11 @@ export type DailyStatWhereInput = {
   leetcodeProfileId?: Prisma.IntFilter<"DailyStat"> | number
   date?: Prisma.DateTimeFilter<"DailyStat"> | Date | string
   totalSolved?: Prisma.IntFilter<"DailyStat"> | number
+  easySolved?: Prisma.IntFilter<"DailyStat"> | number
+  mediumSolved?: Prisma.IntFilter<"DailyStat"> | number
+  hardSolved?: Prisma.IntFilter<"DailyStat"> | number
+  ranking?: Prisma.IntFilter<"DailyStat"> | number
+  contestRating?: Prisma.IntFilter<"DailyStat"> | number
   rankingPoints?: Prisma.IntFilter<"DailyStat"> | number
   leetcodeProfile?: Prisma.XOR<Prisma.LeetcodeProfileScalarRelationFilter, Prisma.LeetcodeProfileWhereInput>
 }
@@ -236,6 +296,11 @@ export type DailyStatOrderByWithRelationInput = {
   leetcodeProfileId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   totalSolved?: Prisma.SortOrder
+  easySolved?: Prisma.SortOrder
+  mediumSolved?: Prisma.SortOrder
+  hardSolved?: Prisma.SortOrder
+  ranking?: Prisma.SortOrder
+  contestRating?: Prisma.SortOrder
   rankingPoints?: Prisma.SortOrder
   leetcodeProfile?: Prisma.LeetcodeProfileOrderByWithRelationInput
 }
@@ -249,6 +314,11 @@ export type DailyStatWhereUniqueInput = Prisma.AtLeast<{
   leetcodeProfileId?: Prisma.IntFilter<"DailyStat"> | number
   date?: Prisma.DateTimeFilter<"DailyStat"> | Date | string
   totalSolved?: Prisma.IntFilter<"DailyStat"> | number
+  easySolved?: Prisma.IntFilter<"DailyStat"> | number
+  mediumSolved?: Prisma.IntFilter<"DailyStat"> | number
+  hardSolved?: Prisma.IntFilter<"DailyStat"> | number
+  ranking?: Prisma.IntFilter<"DailyStat"> | number
+  contestRating?: Prisma.IntFilter<"DailyStat"> | number
   rankingPoints?: Prisma.IntFilter<"DailyStat"> | number
   leetcodeProfile?: Prisma.XOR<Prisma.LeetcodeProfileScalarRelationFilter, Prisma.LeetcodeProfileWhereInput>
 }, "id" | "leetcodeProfileId_date">
@@ -258,6 +328,11 @@ export type DailyStatOrderByWithAggregationInput = {
   leetcodeProfileId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   totalSolved?: Prisma.SortOrder
+  easySolved?: Prisma.SortOrder
+  mediumSolved?: Prisma.SortOrder
+  hardSolved?: Prisma.SortOrder
+  ranking?: Prisma.SortOrder
+  contestRating?: Prisma.SortOrder
   rankingPoints?: Prisma.SortOrder
   _count?: Prisma.DailyStatCountOrderByAggregateInput
   _avg?: Prisma.DailyStatAvgOrderByAggregateInput
@@ -274,12 +349,22 @@ export type DailyStatScalarWhereWithAggregatesInput = {
   leetcodeProfileId?: Prisma.IntWithAggregatesFilter<"DailyStat"> | number
   date?: Prisma.DateTimeWithAggregatesFilter<"DailyStat"> | Date | string
   totalSolved?: Prisma.IntWithAggregatesFilter<"DailyStat"> | number
+  easySolved?: Prisma.IntWithAggregatesFilter<"DailyStat"> | number
+  mediumSolved?: Prisma.IntWithAggregatesFilter<"DailyStat"> | number
+  hardSolved?: Prisma.IntWithAggregatesFilter<"DailyStat"> | number
+  ranking?: Prisma.IntWithAggregatesFilter<"DailyStat"> | number
+  contestRating?: Prisma.IntWithAggregatesFilter<"DailyStat"> | number
   rankingPoints?: Prisma.IntWithAggregatesFilter<"DailyStat"> | number
 }
 
 export type DailyStatCreateInput = {
   date: Date | string
   totalSolved: number
+  easySolved?: number
+  mediumSolved?: number
+  hardSolved?: number
+  ranking?: number
+  contestRating?: number
   rankingPoints: number
   leetcodeProfile: Prisma.LeetcodeProfileCreateNestedOneWithoutStatsInput
 }
@@ -289,12 +374,22 @@ export type DailyStatUncheckedCreateInput = {
   leetcodeProfileId: number
   date: Date | string
   totalSolved: number
+  easySolved?: number
+  mediumSolved?: number
+  hardSolved?: number
+  ranking?: number
+  contestRating?: number
   rankingPoints: number
 }
 
 export type DailyStatUpdateInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   totalSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  easySolved?: Prisma.IntFieldUpdateOperationsInput | number
+  mediumSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  hardSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  ranking?: Prisma.IntFieldUpdateOperationsInput | number
+  contestRating?: Prisma.IntFieldUpdateOperationsInput | number
   rankingPoints?: Prisma.IntFieldUpdateOperationsInput | number
   leetcodeProfile?: Prisma.LeetcodeProfileUpdateOneRequiredWithoutStatsNestedInput
 }
@@ -304,6 +399,11 @@ export type DailyStatUncheckedUpdateInput = {
   leetcodeProfileId?: Prisma.IntFieldUpdateOperationsInput | number
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   totalSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  easySolved?: Prisma.IntFieldUpdateOperationsInput | number
+  mediumSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  hardSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  ranking?: Prisma.IntFieldUpdateOperationsInput | number
+  contestRating?: Prisma.IntFieldUpdateOperationsInput | number
   rankingPoints?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -312,12 +412,22 @@ export type DailyStatCreateManyInput = {
   leetcodeProfileId: number
   date: Date | string
   totalSolved: number
+  easySolved?: number
+  mediumSolved?: number
+  hardSolved?: number
+  ranking?: number
+  contestRating?: number
   rankingPoints: number
 }
 
 export type DailyStatUpdateManyMutationInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   totalSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  easySolved?: Prisma.IntFieldUpdateOperationsInput | number
+  mediumSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  hardSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  ranking?: Prisma.IntFieldUpdateOperationsInput | number
+  contestRating?: Prisma.IntFieldUpdateOperationsInput | number
   rankingPoints?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -326,6 +436,11 @@ export type DailyStatUncheckedUpdateManyInput = {
   leetcodeProfileId?: Prisma.IntFieldUpdateOperationsInput | number
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   totalSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  easySolved?: Prisma.IntFieldUpdateOperationsInput | number
+  mediumSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  hardSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  ranking?: Prisma.IntFieldUpdateOperationsInput | number
+  contestRating?: Prisma.IntFieldUpdateOperationsInput | number
   rankingPoints?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -349,6 +464,11 @@ export type DailyStatCountOrderByAggregateInput = {
   leetcodeProfileId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   totalSolved?: Prisma.SortOrder
+  easySolved?: Prisma.SortOrder
+  mediumSolved?: Prisma.SortOrder
+  hardSolved?: Prisma.SortOrder
+  ranking?: Prisma.SortOrder
+  contestRating?: Prisma.SortOrder
   rankingPoints?: Prisma.SortOrder
 }
 
@@ -356,6 +476,11 @@ export type DailyStatAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   leetcodeProfileId?: Prisma.SortOrder
   totalSolved?: Prisma.SortOrder
+  easySolved?: Prisma.SortOrder
+  mediumSolved?: Prisma.SortOrder
+  hardSolved?: Prisma.SortOrder
+  ranking?: Prisma.SortOrder
+  contestRating?: Prisma.SortOrder
   rankingPoints?: Prisma.SortOrder
 }
 
@@ -364,6 +489,11 @@ export type DailyStatMaxOrderByAggregateInput = {
   leetcodeProfileId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   totalSolved?: Prisma.SortOrder
+  easySolved?: Prisma.SortOrder
+  mediumSolved?: Prisma.SortOrder
+  hardSolved?: Prisma.SortOrder
+  ranking?: Prisma.SortOrder
+  contestRating?: Prisma.SortOrder
   rankingPoints?: Prisma.SortOrder
 }
 
@@ -372,6 +502,11 @@ export type DailyStatMinOrderByAggregateInput = {
   leetcodeProfileId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   totalSolved?: Prisma.SortOrder
+  easySolved?: Prisma.SortOrder
+  mediumSolved?: Prisma.SortOrder
+  hardSolved?: Prisma.SortOrder
+  ranking?: Prisma.SortOrder
+  contestRating?: Prisma.SortOrder
   rankingPoints?: Prisma.SortOrder
 }
 
@@ -379,6 +514,11 @@ export type DailyStatSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   leetcodeProfileId?: Prisma.SortOrder
   totalSolved?: Prisma.SortOrder
+  easySolved?: Prisma.SortOrder
+  mediumSolved?: Prisma.SortOrder
+  hardSolved?: Prisma.SortOrder
+  ranking?: Prisma.SortOrder
+  contestRating?: Prisma.SortOrder
   rankingPoints?: Prisma.SortOrder
 }
 
@@ -431,6 +571,11 @@ export type DateTimeFieldUpdateOperationsInput = {
 export type DailyStatCreateWithoutLeetcodeProfileInput = {
   date: Date | string
   totalSolved: number
+  easySolved?: number
+  mediumSolved?: number
+  hardSolved?: number
+  ranking?: number
+  contestRating?: number
   rankingPoints: number
 }
 
@@ -438,6 +583,11 @@ export type DailyStatUncheckedCreateWithoutLeetcodeProfileInput = {
   id?: number
   date: Date | string
   totalSolved: number
+  easySolved?: number
+  mediumSolved?: number
+  hardSolved?: number
+  ranking?: number
+  contestRating?: number
   rankingPoints: number
 }
 
@@ -475,6 +625,11 @@ export type DailyStatScalarWhereInput = {
   leetcodeProfileId?: Prisma.IntFilter<"DailyStat"> | number
   date?: Prisma.DateTimeFilter<"DailyStat"> | Date | string
   totalSolved?: Prisma.IntFilter<"DailyStat"> | number
+  easySolved?: Prisma.IntFilter<"DailyStat"> | number
+  mediumSolved?: Prisma.IntFilter<"DailyStat"> | number
+  hardSolved?: Prisma.IntFilter<"DailyStat"> | number
+  ranking?: Prisma.IntFilter<"DailyStat"> | number
+  contestRating?: Prisma.IntFilter<"DailyStat"> | number
   rankingPoints?: Prisma.IntFilter<"DailyStat"> | number
 }
 
@@ -482,12 +637,22 @@ export type DailyStatCreateManyLeetcodeProfileInput = {
   id?: number
   date: Date | string
   totalSolved: number
+  easySolved?: number
+  mediumSolved?: number
+  hardSolved?: number
+  ranking?: number
+  contestRating?: number
   rankingPoints: number
 }
 
 export type DailyStatUpdateWithoutLeetcodeProfileInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   totalSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  easySolved?: Prisma.IntFieldUpdateOperationsInput | number
+  mediumSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  hardSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  ranking?: Prisma.IntFieldUpdateOperationsInput | number
+  contestRating?: Prisma.IntFieldUpdateOperationsInput | number
   rankingPoints?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -495,6 +660,11 @@ export type DailyStatUncheckedUpdateWithoutLeetcodeProfileInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   totalSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  easySolved?: Prisma.IntFieldUpdateOperationsInput | number
+  mediumSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  hardSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  ranking?: Prisma.IntFieldUpdateOperationsInput | number
+  contestRating?: Prisma.IntFieldUpdateOperationsInput | number
   rankingPoints?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -502,6 +672,11 @@ export type DailyStatUncheckedUpdateManyWithoutLeetcodeProfileInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   totalSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  easySolved?: Prisma.IntFieldUpdateOperationsInput | number
+  mediumSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  hardSolved?: Prisma.IntFieldUpdateOperationsInput | number
+  ranking?: Prisma.IntFieldUpdateOperationsInput | number
+  contestRating?: Prisma.IntFieldUpdateOperationsInput | number
   rankingPoints?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -512,6 +687,11 @@ export type DailyStatSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   leetcodeProfileId?: boolean
   date?: boolean
   totalSolved?: boolean
+  easySolved?: boolean
+  mediumSolved?: boolean
+  hardSolved?: boolean
+  ranking?: boolean
+  contestRating?: boolean
   rankingPoints?: boolean
   leetcodeProfile?: boolean | Prisma.LeetcodeProfileDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["dailyStat"]>
@@ -521,6 +701,11 @@ export type DailyStatSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   leetcodeProfileId?: boolean
   date?: boolean
   totalSolved?: boolean
+  easySolved?: boolean
+  mediumSolved?: boolean
+  hardSolved?: boolean
+  ranking?: boolean
+  contestRating?: boolean
   rankingPoints?: boolean
   leetcodeProfile?: boolean | Prisma.LeetcodeProfileDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["dailyStat"]>
@@ -530,6 +715,11 @@ export type DailyStatSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   leetcodeProfileId?: boolean
   date?: boolean
   totalSolved?: boolean
+  easySolved?: boolean
+  mediumSolved?: boolean
+  hardSolved?: boolean
+  ranking?: boolean
+  contestRating?: boolean
   rankingPoints?: boolean
   leetcodeProfile?: boolean | Prisma.LeetcodeProfileDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["dailyStat"]>
@@ -539,10 +729,15 @@ export type DailyStatSelectScalar = {
   leetcodeProfileId?: boolean
   date?: boolean
   totalSolved?: boolean
+  easySolved?: boolean
+  mediumSolved?: boolean
+  hardSolved?: boolean
+  ranking?: boolean
+  contestRating?: boolean
   rankingPoints?: boolean
 }
 
-export type DailyStatOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "leetcodeProfileId" | "date" | "totalSolved" | "rankingPoints", ExtArgs["result"]["dailyStat"]>
+export type DailyStatOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "leetcodeProfileId" | "date" | "totalSolved" | "easySolved" | "mediumSolved" | "hardSolved" | "ranking" | "contestRating" | "rankingPoints", ExtArgs["result"]["dailyStat"]>
 export type DailyStatInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   leetcodeProfile?: boolean | Prisma.LeetcodeProfileDefaultArgs<ExtArgs>
 }
@@ -563,6 +758,11 @@ export type $DailyStatPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     leetcodeProfileId: number
     date: Date
     totalSolved: number
+    easySolved: number
+    mediumSolved: number
+    hardSolved: number
+    ranking: number
+    contestRating: number
     rankingPoints: number
   }, ExtArgs["result"]["dailyStat"]>
   composites: {}
@@ -992,6 +1192,11 @@ export interface DailyStatFieldRefs {
   readonly leetcodeProfileId: Prisma.FieldRef<"DailyStat", 'Int'>
   readonly date: Prisma.FieldRef<"DailyStat", 'DateTime'>
   readonly totalSolved: Prisma.FieldRef<"DailyStat", 'Int'>
+  readonly easySolved: Prisma.FieldRef<"DailyStat", 'Int'>
+  readonly mediumSolved: Prisma.FieldRef<"DailyStat", 'Int'>
+  readonly hardSolved: Prisma.FieldRef<"DailyStat", 'Int'>
+  readonly ranking: Prisma.FieldRef<"DailyStat", 'Int'>
+  readonly contestRating: Prisma.FieldRef<"DailyStat", 'Int'>
   readonly rankingPoints: Prisma.FieldRef<"DailyStat", 'Int'>
 }
     

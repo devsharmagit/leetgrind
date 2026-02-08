@@ -293,6 +293,11 @@ export async function getGroupDetails(groupId: number) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       include: {
@@ -309,6 +314,9 @@ export async function getGroupDetails(groupId: number) {
             },
           },
         },
+        _count: {
+          select: { members: true },
+        },
       },
     });
 
@@ -316,12 +324,170 @@ export async function getGroupDetails(groupId: number) {
       return { success: false, error: 'Group not found' };
     }
 
-    // Optional: Check if user has access to this group
-    // For now, any logged-in user can view any group details
-
-    return { success: true, data: group };
+    return { success: true, data: group, currentUserId: user?.id ?? null };
   } catch (error) {
     console.error('Error fetching group details:', error);
     return { success: false, error: 'Failed to fetch group details' };
+  }
+}
+
+// Validate if a LeetCode username exists
+export async function validateLeetCodeUsername(username: string): Promise<{ valid: boolean; error?: string }> {
+  try {
+    const response = await fetch(`https://leetcode.com/graphql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `
+          query userPublicProfile($username: String!) {
+            matchedUser(username: $username) {
+              username
+            }
+          }
+        `,
+        variables: { username },
+      }),
+    });
+
+    if (!response.ok) {
+      return { valid: false, error: 'Failed to verify username' };
+    }
+
+    const data = await response.json();
+    
+    if (data.data?.matchedUser?.username) {
+      return { valid: true };
+    }
+    
+    return { valid: false, error: `Username "${username}" not found on LeetCode` };
+  } catch (error) {
+    console.error('Error validating LeetCode username:', error);
+    return { valid: false, error: 'Failed to verify username' };
+  }
+}
+
+// Add multiple members to a group with validation
+export async function addMembersToGroup(groupId: number, usernames: string[]) {
+  // Check if user is logged in
+  const session = await auth();
+  
+  if (!session?.user?.email) {
+    return { success: false, error: 'Unauthorized. Please log in.' };
+  }
+
+  try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    // Check if user owns the group
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      include: {
+        members: {
+          include: {
+            leetcodeProfile: true,
+          },
+        },
+      },
+    });
+
+    if (!group) {
+      return { success: false, error: 'Group not found' };
+    }
+
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'You can only add members to groups you own.' };
+    }
+
+    // Get existing usernames in the group
+    const existingUsernames = new Set(
+      group.members.map((m) => m.leetcodeProfile.username.toLowerCase())
+    );
+
+    const results: Array<{
+      username: string;
+      status: 'success' | 'error' | 'skipped';
+      message: string;
+    }> = [];
+
+    // Process each username
+    for (const rawUsername of usernames) {
+      const username = rawUsername.trim();
+      
+      if (!username) continue;
+
+      // Check if already in group
+      if (existingUsernames.has(username.toLowerCase())) {
+        results.push({
+          username,
+          status: 'skipped',
+          message: 'Already in group',
+        });
+        continue;
+      }
+
+      // Validate LeetCode username
+      const validation = await validateLeetCodeUsername(username);
+      
+      if (!validation.valid) {
+        results.push({
+          username,
+          status: 'error',
+          message: validation.error || 'Invalid username',
+        });
+        continue;
+      }
+
+      try {
+        // Find or create the LeetCode profile
+        let leetcodeProfile = await prisma.leetcodeProfile.findUnique({
+          where: { username },
+        });
+
+        if (!leetcodeProfile) {
+          leetcodeProfile = await prisma.leetcodeProfile.create({
+            data: { username },
+          });
+        }
+
+        // Add member to group
+        await prisma.groupMember.create({
+          data: {
+            groupId,
+            leetcodeProfileId: leetcodeProfile.id,
+          },
+        });
+
+        existingUsernames.add(username.toLowerCase());
+        
+        results.push({
+          username,
+          status: 'success',
+          message: 'Added successfully',
+        });
+      } catch {
+        results.push({
+          username,
+          status: 'error',
+          message: 'Failed to add',
+        });
+      }
+    }
+
+    revalidatePath(`/dashboard/groups/${groupId}`);
+    revalidatePath('/dashboard');
+    
+    return { success: true, results };
+  } catch (error) {
+    console.error('Error adding members:', error);
+    return { success: false, error: 'Failed to add members' };
   }
 }
