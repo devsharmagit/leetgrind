@@ -388,7 +388,8 @@ export const ModelName = {
   Group: 'Group',
   LeetcodeProfile: 'LeetcodeProfile',
   GroupMember: 'GroupMember',
-  DailyStat: 'DailyStat'
+  DailyStat: 'DailyStat',
+  LeaderboardSnapshot: 'LeaderboardSnapshot'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -404,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "group" | "leetcodeProfile" | "groupMember" | "dailyStat"
+    modelProps: "user" | "group" | "leetcodeProfile" | "groupMember" | "dailyStat" | "leaderboardSnapshot"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -778,6 +779,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    LeaderboardSnapshot: {
+      payload: Prisma.$LeaderboardSnapshotPayload<ExtArgs>
+      fields: Prisma.LeaderboardSnapshotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LeaderboardSnapshotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LeaderboardSnapshotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>
+        }
+        findFirst: {
+          args: Prisma.LeaderboardSnapshotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LeaderboardSnapshotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>
+        }
+        findMany: {
+          args: Prisma.LeaderboardSnapshotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>[]
+        }
+        create: {
+          args: Prisma.LeaderboardSnapshotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>
+        }
+        createMany: {
+          args: Prisma.LeaderboardSnapshotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LeaderboardSnapshotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>[]
+        }
+        delete: {
+          args: Prisma.LeaderboardSnapshotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>
+        }
+        update: {
+          args: Prisma.LeaderboardSnapshotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>
+        }
+        deleteMany: {
+          args: Prisma.LeaderboardSnapshotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LeaderboardSnapshotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LeaderboardSnapshotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>[]
+        }
+        upsert: {
+          args: Prisma.LeaderboardSnapshotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LeaderboardSnapshotPayload>
+        }
+        aggregate: {
+          args: Prisma.LeaderboardSnapshotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLeaderboardSnapshot>
+        }
+        groupBy: {
+          args: Prisma.LeaderboardSnapshotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LeaderboardSnapshotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LeaderboardSnapshotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LeaderboardSnapshotCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -868,6 +943,18 @@ export const DailyStatScalarFieldEnum = {
 export type DailyStatScalarFieldEnum = (typeof DailyStatScalarFieldEnum)[keyof typeof DailyStatScalarFieldEnum]
 
 
+export const LeaderboardSnapshotScalarFieldEnum = {
+  id: 'id',
+  groupId: 'groupId',
+  date: 'date',
+  snapshotData: 'snapshotData',
+  topGainers: 'topGainers',
+  createdAt: 'createdAt'
+} as const
+
+export type LeaderboardSnapshotScalarFieldEnum = (typeof LeaderboardSnapshotScalarFieldEnum)[keyof typeof LeaderboardSnapshotScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -876,12 +963,44 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 
@@ -929,6 +1048,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1045,6 +1178,7 @@ export type GlobalOmitConfig = {
   leetcodeProfile?: Prisma.LeetcodeProfileOmit
   groupMember?: Prisma.GroupMemberOmit
   dailyStat?: Prisma.DailyStatOmit
+  leaderboardSnapshot?: Prisma.LeaderboardSnapshotOmit
 }
 
 /* Types for Logging */

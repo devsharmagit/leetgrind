@@ -28,6 +28,7 @@ model Group {
   owner     User   @relation("GroupOwner", fields: [ownerId], references: [id])
   users     User[] @relation("UserGroups")
   members   GroupMember[]
+  leaderboardSnapshots LeaderboardSnapshot[]
 }
 
 model LeetcodeProfile {
@@ -63,4 +64,19 @@ model DailyStat {
   leetcodeProfile   LeetcodeProfile  @relation(fields: [leetcodeProfileId], references: [id])
 
   @@unique([leetcodeProfileId, date])
+}
+
+model LeaderboardSnapshot {
+  id              Int      @id @default(autoincrement())
+  groupId         Int
+  date            DateTime
+  snapshotData    Json     // Stores the full leaderboard data for that day
+  topGainers      Json?    // Optional: stores top gainers data
+  createdAt       DateTime @default(now())
+
+  group           Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, date])
+  @@index([groupId])
+  @@index([date])
 }

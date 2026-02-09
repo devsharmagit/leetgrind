@@ -355,3 +355,111 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
     return { success: false, error: 'Failed to get gainers' };
   }
 }
+
+export async function saveLeaderboardSnapshot(groupId: number) {
+  const session = await auth();
+  
+  if (!session?.user?.email) {
+    return { success: false, error: 'Unauthorized. Please log in.' };
+  }
+
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get the current leaderboard data
+    const leaderboardResult = await getGroupLeaderboard(groupId);
+    const gainersResult = await getGroupGainers(groupId, 7);
+
+    if (!leaderboardResult.success || !leaderboardResult.data) {
+      return { success: false, error: 'Failed to get leaderboard data' };
+    }
+
+    // Upsert the snapshot for today
+    await prisma.leaderboardSnapshot.upsert({
+      where: {
+        groupId_date: {
+          groupId,
+          date: today,
+        },
+      },
+      update: {
+        snapshotData: JSON.parse(JSON.stringify(leaderboardResult.data)),
+        topGainers: gainersResult.success && gainersResult.data 
+          ? JSON.parse(JSON.stringify(gainersResult.data)) 
+          : null,
+      },
+      create: {
+        groupId,
+        date: today,
+        snapshotData: JSON.parse(JSON.stringify(leaderboardResult.data)),
+        topGainers: gainersResult.success && gainersResult.data 
+          ? JSON.parse(JSON.stringify(gainersResult.data)) 
+          : null,
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving leaderboard snapshot:', error);
+    return { success: false, error: 'Failed to save snapshot' };
+  }
+}
+
+export async function getLeaderboardHistory(groupId: number, days: number = 30) {
+  const session = await auth();
+  
+  if (!session?.user?.email) {
+    return { success: false, error: 'Unauthorized. Please log in.' };
+  }
+
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
+
+    const snapshots = await prisma.leaderboardSnapshot.findMany({
+      where: {
+        groupId,
+        date: {
+          gte: startDate,
+        },
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    return { success: true, data: snapshots };
+  } catch (error) {
+    console.error('Error getting leaderboard history:', error);
+    return { success: false, error: 'Failed to get history' };
+  }
+}
+
+export async function getProfileHistory(username: string, days: number = 30) {
+  const session = await auth();
+  
+  if (!session?.user?.email) {
+    return { success: false, error: 'Unauthorized. Please log in.' };
+  }
+
+  try {
+    const profile = await prisma.leetcodeProfile.findUnique({
+      where: { username },
+      include: {
+        stats: {
+          orderBy: { date: 'desc' },
+          take: days,
+        },
+      },
+    });
+
+    if (!profile) {
+      return { success: false, error: 'Profile not found' };
+    }
+
+    return { success: true, data: profile };
+  } catch (error) {
+    console.error('Error getting profile history:', error);
+    return { success: false, error: 'Failed to get profile history' };
+  }
+}

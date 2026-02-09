@@ -45,8 +45,8 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
       return;
     }
 
-    if (usernames.length > 50) {
-      toast.error('Maximum 50 usernames allowed at once');
+    if (usernames.length > 200) {
+      toast.error('Maximum 200 usernames allowed at once');
       return;
     }
 
@@ -137,7 +137,7 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
             <span className="text-neutral-500">
               {usernameCount > 0 ? `${usernameCount} username${usernameCount > 1 ? 's' : ''}` : 'No usernames entered'}
             </span>
-            <span className="text-neutral-600">Max 50 at once</span>
+            <span className="text-neutral-600">Max 200 at once</span>
           </div>
         </div>
 

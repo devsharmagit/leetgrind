@@ -64,3 +64,8 @@ export type GroupMember = Prisma.GroupMemberModel
  * 
  */
 export type DailyStat = Prisma.DailyStatModel
+/**
+ * Model LeaderboardSnapshot
+ * 
+ */
+export type LeaderboardSnapshot = Prisma.LeaderboardSnapshotModel

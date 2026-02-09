@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Users, Crown, Trash2, X, UserPlus } from 'lucide-react';
+import { ArrowLeft, Users, Crown, Trash2, X, UserPlus, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,6 @@ import {
 import { deleteGroup, removeMemberFromGroup } from '@/app/actions/groups';
 import { toast } from 'sonner';
 import BulkAddMembers from './bulk-add-members';
-import { Leaderboard } from './leaderboard';
 
 interface GroupDetailsClientProps {
   group: {
@@ -199,8 +199,27 @@ export default function GroupDetailsClient({ group, isOwner }: GroupDetailsClien
         )}
       </div>
 
-      {/* Leaderboard Section */}
-      <Leaderboard groupId={group.id} />
+      {/* Leaderboard Link Section */}
+      <Card className="border-neutral-800 bg-neutral-900">
+        <CardContent className="py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-yellow-500" />
+              </div>
+              <div>
+                <h3 className="text-white font-semibold text-lg">Leaderboard</h3>
+                <p className="text-neutral-400 text-sm">View rankings, stats, and track progress over time</p>
+              </div>
+            </div>
+            <Link href={`/dashboard/groups/${group.id}/leaderboard`}>
+              <Button className="bg-white text-black hover:bg-neutral-200">
+                View Leaderboard
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
