@@ -9,7 +9,9 @@
 * 🟢 You can import this file directly.
 */
 
+export const GroupVisibility = {
+  UNLISTED: 'UNLISTED',
+  PRIVATE: 'PRIVATE'
+} as const
 
-
-// This file is empty because there are no enums in the schema.
-export {}
+export type GroupVisibility = (typeof GroupVisibility)[keyof typeof GroupVisibility]

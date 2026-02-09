@@ -37,16 +37,19 @@ export type LeetcodeProfileSumAggregateOutputType = {
 export type LeetcodeProfileMinAggregateOutputType = {
   id: number | null
   username: string | null
+  createdAt: Date | null
 }
 
 export type LeetcodeProfileMaxAggregateOutputType = {
   id: number | null
   username: string | null
+  createdAt: Date | null
 }
 
 export type LeetcodeProfileCountAggregateOutputType = {
   id: number
   username: number
+  createdAt: number
   _all: number
 }
 
@@ -62,16 +65,19 @@ export type LeetcodeProfileSumAggregateInputType = {
 export type LeetcodeProfileMinAggregateInputType = {
   id?: true
   username?: true
+  createdAt?: true
 }
 
 export type LeetcodeProfileMaxAggregateInputType = {
   id?: true
   username?: true
+  createdAt?: true
 }
 
 export type LeetcodeProfileCountAggregateInputType = {
   id?: true
   username?: true
+  createdAt?: true
   _all?: true
 }
 
@@ -164,6 +170,7 @@ export type LeetcodeProfileGroupByArgs<ExtArgs extends runtime.Types.Extensions.
 export type LeetcodeProfileGroupByOutputType = {
   id: number
   username: string
+  createdAt: Date
   _count: LeetcodeProfileCountAggregateOutputType | null
   _avg: LeetcodeProfileAvgAggregateOutputType | null
   _sum: LeetcodeProfileSumAggregateOutputType | null
@@ -192,6 +199,7 @@ export type LeetcodeProfileWhereInput = {
   NOT?: Prisma.LeetcodeProfileWhereInput | Prisma.LeetcodeProfileWhereInput[]
   id?: Prisma.IntFilter<"LeetcodeProfile"> | number
   username?: Prisma.StringFilter<"LeetcodeProfile"> | string
+  createdAt?: Prisma.DateTimeFilter<"LeetcodeProfile"> | Date | string
   groups?: Prisma.GroupMemberListRelationFilter
   stats?: Prisma.DailyStatListRelationFilter
 }
@@ -199,6 +207,7 @@ export type LeetcodeProfileWhereInput = {
 export type LeetcodeProfileOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   groups?: Prisma.GroupMemberOrderByRelationAggregateInput
   stats?: Prisma.DailyStatOrderByRelationAggregateInput
 }
@@ -209,6 +218,7 @@ export type LeetcodeProfileWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.LeetcodeProfileWhereInput | Prisma.LeetcodeProfileWhereInput[]
   OR?: Prisma.LeetcodeProfileWhereInput[]
   NOT?: Prisma.LeetcodeProfileWhereInput | Prisma.LeetcodeProfileWhereInput[]
+  createdAt?: Prisma.DateTimeFilter<"LeetcodeProfile"> | Date | string
   groups?: Prisma.GroupMemberListRelationFilter
   stats?: Prisma.DailyStatListRelationFilter
 }, "id" | "username">
@@ -216,6 +226,7 @@ export type LeetcodeProfileWhereUniqueInput = Prisma.AtLeast<{
 export type LeetcodeProfileOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   _count?: Prisma.LeetcodeProfileCountOrderByAggregateInput
   _avg?: Prisma.LeetcodeProfileAvgOrderByAggregateInput
   _max?: Prisma.LeetcodeProfileMaxOrderByAggregateInput
@@ -229,10 +240,12 @@ export type LeetcodeProfileScalarWhereWithAggregatesInput = {
   NOT?: Prisma.LeetcodeProfileScalarWhereWithAggregatesInput | Prisma.LeetcodeProfileScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"LeetcodeProfile"> | number
   username?: Prisma.StringWithAggregatesFilter<"LeetcodeProfile"> | string
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"LeetcodeProfile"> | Date | string
 }
 
 export type LeetcodeProfileCreateInput = {
   username: string
+  createdAt?: Date | string
   groups?: Prisma.GroupMemberCreateNestedManyWithoutLeetcodeProfileInput
   stats?: Prisma.DailyStatCreateNestedManyWithoutLeetcodeProfileInput
 }
@@ -240,12 +253,14 @@ export type LeetcodeProfileCreateInput = {
 export type LeetcodeProfileUncheckedCreateInput = {
   id?: number
   username: string
+  createdAt?: Date | string
   groups?: Prisma.GroupMemberUncheckedCreateNestedManyWithoutLeetcodeProfileInput
   stats?: Prisma.DailyStatUncheckedCreateNestedManyWithoutLeetcodeProfileInput
 }
 
 export type LeetcodeProfileUpdateInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groups?: Prisma.GroupMemberUpdateManyWithoutLeetcodeProfileNestedInput
   stats?: Prisma.DailyStatUpdateManyWithoutLeetcodeProfileNestedInput
 }
@@ -253,6 +268,7 @@ export type LeetcodeProfileUpdateInput = {
 export type LeetcodeProfileUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groups?: Prisma.GroupMemberUncheckedUpdateManyWithoutLeetcodeProfileNestedInput
   stats?: Prisma.DailyStatUncheckedUpdateManyWithoutLeetcodeProfileNestedInput
 }
@@ -260,20 +276,24 @@ export type LeetcodeProfileUncheckedUpdateInput = {
 export type LeetcodeProfileCreateManyInput = {
   id?: number
   username: string
+  createdAt?: Date | string
 }
 
 export type LeetcodeProfileUpdateManyMutationInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type LeetcodeProfileUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type LeetcodeProfileCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type LeetcodeProfileAvgOrderByAggregateInput = {
@@ -283,11 +303,13 @@ export type LeetcodeProfileAvgOrderByAggregateInput = {
 export type LeetcodeProfileMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type LeetcodeProfileMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type LeetcodeProfileSumOrderByAggregateInput = {
@@ -329,12 +351,14 @@ export type LeetcodeProfileUpdateOneRequiredWithoutStatsNestedInput = {
 
 export type LeetcodeProfileCreateWithoutGroupsInput = {
   username: string
+  createdAt?: Date | string
   stats?: Prisma.DailyStatCreateNestedManyWithoutLeetcodeProfileInput
 }
 
 export type LeetcodeProfileUncheckedCreateWithoutGroupsInput = {
   id?: number
   username: string
+  createdAt?: Date | string
   stats?: Prisma.DailyStatUncheckedCreateNestedManyWithoutLeetcodeProfileInput
 }
 
@@ -356,23 +380,27 @@ export type LeetcodeProfileUpdateToOneWithWhereWithoutGroupsInput = {
 
 export type LeetcodeProfileUpdateWithoutGroupsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stats?: Prisma.DailyStatUpdateManyWithoutLeetcodeProfileNestedInput
 }
 
 export type LeetcodeProfileUncheckedUpdateWithoutGroupsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   stats?: Prisma.DailyStatUncheckedUpdateManyWithoutLeetcodeProfileNestedInput
 }
 
 export type LeetcodeProfileCreateWithoutStatsInput = {
   username: string
+  createdAt?: Date | string
   groups?: Prisma.GroupMemberCreateNestedManyWithoutLeetcodeProfileInput
 }
 
 export type LeetcodeProfileUncheckedCreateWithoutStatsInput = {
   id?: number
   username: string
+  createdAt?: Date | string
   groups?: Prisma.GroupMemberUncheckedCreateNestedManyWithoutLeetcodeProfileInput
 }
 
@@ -394,12 +422,14 @@ export type LeetcodeProfileUpdateToOneWithWhereWithoutStatsInput = {
 
 export type LeetcodeProfileUpdateWithoutStatsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groups?: Prisma.GroupMemberUpdateManyWithoutLeetcodeProfileNestedInput
 }
 
 export type LeetcodeProfileUncheckedUpdateWithoutStatsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groups?: Prisma.GroupMemberUncheckedUpdateManyWithoutLeetcodeProfileNestedInput
 }
 
@@ -446,6 +476,7 @@ export type LeetcodeProfileCountOutputTypeCountStatsArgs<ExtArgs extends runtime
 export type LeetcodeProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   username?: boolean
+  createdAt?: boolean
   groups?: boolean | Prisma.LeetcodeProfile$groupsArgs<ExtArgs>
   stats?: boolean | Prisma.LeetcodeProfile$statsArgs<ExtArgs>
   _count?: boolean | Prisma.LeetcodeProfileCountOutputTypeDefaultArgs<ExtArgs>
@@ -454,19 +485,22 @@ export type LeetcodeProfileSelect<ExtArgs extends runtime.Types.Extensions.Inter
 export type LeetcodeProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   username?: boolean
+  createdAt?: boolean
 }, ExtArgs["result"]["leetcodeProfile"]>
 
 export type LeetcodeProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   username?: boolean
+  createdAt?: boolean
 }, ExtArgs["result"]["leetcodeProfile"]>
 
 export type LeetcodeProfileSelectScalar = {
   id?: boolean
   username?: boolean
+  createdAt?: boolean
 }
 
-export type LeetcodeProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username", ExtArgs["result"]["leetcodeProfile"]>
+export type LeetcodeProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "createdAt", ExtArgs["result"]["leetcodeProfile"]>
 export type LeetcodeProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   groups?: boolean | Prisma.LeetcodeProfile$groupsArgs<ExtArgs>
   stats?: boolean | Prisma.LeetcodeProfile$statsArgs<ExtArgs>
@@ -484,6 +518,7 @@ export type $LeetcodeProfilePayload<ExtArgs extends runtime.Types.Extensions.Int
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     username: string
+    createdAt: Date
   }, ExtArgs["result"]["leetcodeProfile"]>
   composites: {}
 }
@@ -911,6 +946,7 @@ export interface Prisma__LeetcodeProfileClient<T, Null = never, ExtArgs extends 
 export interface LeetcodeProfileFieldRefs {
   readonly id: Prisma.FieldRef<"LeetcodeProfile", 'Int'>
   readonly username: Prisma.FieldRef<"LeetcodeProfile", 'String'>
+  readonly createdAt: Prisma.FieldRef<"LeetcodeProfile", 'DateTime'>
 }
     
 

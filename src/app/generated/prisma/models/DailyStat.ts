@@ -564,10 +564,6 @@ export type DailyStatUncheckedUpdateManyWithoutLeetcodeProfileNestedInput = {
   deleteMany?: Prisma.DailyStatScalarWhereInput | Prisma.DailyStatScalarWhereInput[]
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type DailyStatCreateWithoutLeetcodeProfileInput = {
   date: Date | string
   totalSolved: number

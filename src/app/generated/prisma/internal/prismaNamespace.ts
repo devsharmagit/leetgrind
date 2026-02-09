@@ -895,7 +895,8 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
-  name: 'name'
+  name: 'name',
+  createdAt: 'createdAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -903,8 +904,11 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 
 export const GroupScalarFieldEnum = {
   id: 'id',
+  publicId: 'publicId',
   name: 'name',
-  ownerId: 'ownerId'
+  visibility: 'visibility',
+  ownerId: 'ownerId',
+  createdAt: 'createdAt'
 } as const
 
 export type GroupScalarFieldEnum = (typeof GroupScalarFieldEnum)[keyof typeof GroupScalarFieldEnum]
@@ -912,7 +916,8 @@ export type GroupScalarFieldEnum = (typeof GroupScalarFieldEnum)[keyof typeof Gr
 
 export const LeetcodeProfileScalarFieldEnum = {
   id: 'id',
-  username: 'username'
+  username: 'username',
+  createdAt: 'createdAt'
 } as const
 
 export type LeetcodeProfileScalarFieldEnum = (typeof LeetcodeProfileScalarFieldEnum)[keyof typeof LeetcodeProfileScalarFieldEnum]
@@ -1048,6 +1053,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'GroupVisibility'
+ */
+export type EnumGroupVisibilityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GroupVisibility'>
+    
+
+
+/**
+ * Reference to a field of type 'GroupVisibility[]'
+ */
+export type ListEnumGroupVisibilityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GroupVisibility[]'>
     
 
 

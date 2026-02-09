@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/app/generated/prisma"
@@ -13,68 +7,90 @@ datasource db {
   provider = "postgresql"
 }
 
+enum GroupVisibility {
+  UNLISTED
+  PRIVATE
+}
+
 model User {
   id          Int     @id @default(autoincrement())
   email       String  @unique
   name        String
-  groups      Group[] @relation("UserGroups")
+
   ownedGroups Group[] @relation("GroupOwner")
+
+  createdAt   DateTime @default(now())
 }
 
 model Group {
-  id        Int    @id @default(autoincrement())
-  name      String
-  ownerId   Int
-  owner     User   @relation("GroupOwner", fields: [ownerId], references: [id])
-  users     User[] @relation("UserGroups")
-  members   GroupMember[]
+  id          Int     @id @default(autoincrement())
+  publicId String @unique @default(cuid())
+  name        String
+  visibility  GroupVisibility @default(UNLISTED)
+
+  ownerId     Int
+  owner       User    @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  members     GroupMember[]
   leaderboardSnapshots LeaderboardSnapshot[]
+
+  createdAt   DateTime @default(now())
+
+  @@index([publicId])
 }
 
 model LeetcodeProfile {
   id        Int    @id @default(autoincrement())
   username  String @unique
+
   groups    GroupMember[]
   stats     DailyStat[]
+
+  createdAt DateTime @default(now())
 }
 
 model GroupMember {
-  id                Int              @id @default(autoincrement())
+  id                Int @id @default(autoincrement())
   groupId           Int
   leetcodeProfileId Int
 
-  group             Group            @relation(fields: [groupId], references: [id])
-  leetcodeProfile   LeetcodeProfile  @relation(fields: [leetcodeProfileId], references: [id])
+  group             Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  leetcodeProfile   LeetcodeProfile @relation(fields: [leetcodeProfileId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, leetcodeProfileId])
+  @@index([groupId])
 }
 
 model DailyStat {
-  id                Int              @id @default(autoincrement())
+  id                Int @id @default(autoincrement())
   leetcodeProfileId Int
-  date              DateTime
+  date              DateTime @db.Date
+
   totalSolved       Int
-  easySolved        Int              @default(0)
-  mediumSolved      Int              @default(0)
-  hardSolved        Int              @default(0)
-  ranking           Int              @default(0)
-  contestRating     Int              @default(0)
+  easySolved        Int @default(0)
+  mediumSolved      Int @default(0)
+  hardSolved        Int @default(0)
+  ranking           Int @default(0)
+  contestRating     Int @default(0)
   rankingPoints     Int
 
-  leetcodeProfile   LeetcodeProfile  @relation(fields: [leetcodeProfileId], references: [id])
+  leetcodeProfile   LeetcodeProfile @relation(fields: [leetcodeProfileId], references: [id], onDelete: Cascade)
 
   @@unique([leetcodeProfileId, date])
+  @@index([date])
 }
 
 model LeaderboardSnapshot {
-  id              Int      @id @default(autoincrement())
-  groupId         Int
-  date            DateTime
-  snapshotData    Json     // Stores the full leaderboard data for that day
-  topGainers      Json?    // Optional: stores top gainers data
-  createdAt       DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  groupId      Int
+  date         DateTime @db.Date
 
-  group           Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  snapshotData Json
+  topGainers   Json?
+
+  createdAt    DateTime @default(now())
+
+  group        Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, date])
   @@index([groupId])

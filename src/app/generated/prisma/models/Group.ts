@@ -38,20 +38,29 @@ export type GroupSumAggregateOutputType = {
 
 export type GroupMinAggregateOutputType = {
   id: number | null
+  publicId: string | null
   name: string | null
+  visibility: $Enums.GroupVisibility | null
   ownerId: number | null
+  createdAt: Date | null
 }
 
 export type GroupMaxAggregateOutputType = {
   id: number | null
+  publicId: string | null
   name: string | null
+  visibility: $Enums.GroupVisibility | null
   ownerId: number | null
+  createdAt: Date | null
 }
 
 export type GroupCountAggregateOutputType = {
   id: number
+  publicId: number
   name: number
+  visibility: number
   ownerId: number
+  createdAt: number
   _all: number
 }
 
@@ -68,20 +77,29 @@ export type GroupSumAggregateInputType = {
 
 export type GroupMinAggregateInputType = {
   id?: true
+  publicId?: true
   name?: true
+  visibility?: true
   ownerId?: true
+  createdAt?: true
 }
 
 export type GroupMaxAggregateInputType = {
   id?: true
+  publicId?: true
   name?: true
+  visibility?: true
   ownerId?: true
+  createdAt?: true
 }
 
 export type GroupCountAggregateInputType = {
   id?: true
+  publicId?: true
   name?: true
+  visibility?: true
   ownerId?: true
+  createdAt?: true
   _all?: true
 }
 
@@ -173,8 +191,11 @@ export type GroupGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
 
 export type GroupGroupByOutputType = {
   id: number
+  publicId: string
   name: string
+  visibility: $Enums.GroupVisibility
   ownerId: number
+  createdAt: Date
   _count: GroupCountAggregateOutputType | null
   _avg: GroupAvgAggregateOutputType | null
   _sum: GroupSumAggregateOutputType | null
@@ -202,41 +223,50 @@ export type GroupWhereInput = {
   OR?: Prisma.GroupWhereInput[]
   NOT?: Prisma.GroupWhereInput | Prisma.GroupWhereInput[]
   id?: Prisma.IntFilter<"Group"> | number
+  publicId?: Prisma.StringFilter<"Group"> | string
   name?: Prisma.StringFilter<"Group"> | string
+  visibility?: Prisma.EnumGroupVisibilityFilter<"Group"> | $Enums.GroupVisibility
   ownerId?: Prisma.IntFilter<"Group"> | number
+  createdAt?: Prisma.DateTimeFilter<"Group"> | Date | string
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  users?: Prisma.UserListRelationFilter
   members?: Prisma.GroupMemberListRelationFilter
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotListRelationFilter
 }
 
 export type GroupOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  publicId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  visibility?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   owner?: Prisma.UserOrderByWithRelationInput
-  users?: Prisma.UserOrderByRelationAggregateInput
   members?: Prisma.GroupMemberOrderByRelationAggregateInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotOrderByRelationAggregateInput
 }
 
 export type GroupWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  publicId?: string
   AND?: Prisma.GroupWhereInput | Prisma.GroupWhereInput[]
   OR?: Prisma.GroupWhereInput[]
   NOT?: Prisma.GroupWhereInput | Prisma.GroupWhereInput[]
   name?: Prisma.StringFilter<"Group"> | string
+  visibility?: Prisma.EnumGroupVisibilityFilter<"Group"> | $Enums.GroupVisibility
   ownerId?: Prisma.IntFilter<"Group"> | number
+  createdAt?: Prisma.DateTimeFilter<"Group"> | Date | string
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  users?: Prisma.UserListRelationFilter
   members?: Prisma.GroupMemberListRelationFilter
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotListRelationFilter
-}, "id">
+}, "id" | "publicId">
 
 export type GroupOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  publicId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  visibility?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   _count?: Prisma.GroupCountOrderByAggregateInput
   _avg?: Prisma.GroupAvgOrderByAggregateInput
   _max?: Prisma.GroupMaxOrderByAggregateInput
@@ -249,58 +279,78 @@ export type GroupScalarWhereWithAggregatesInput = {
   OR?: Prisma.GroupScalarWhereWithAggregatesInput[]
   NOT?: Prisma.GroupScalarWhereWithAggregatesInput | Prisma.GroupScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"Group"> | number
+  publicId?: Prisma.StringWithAggregatesFilter<"Group"> | string
   name?: Prisma.StringWithAggregatesFilter<"Group"> | string
+  visibility?: Prisma.EnumGroupVisibilityWithAggregatesFilter<"Group"> | $Enums.GroupVisibility
   ownerId?: Prisma.IntWithAggregatesFilter<"Group"> | number
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Group"> | Date | string
 }
 
 export type GroupCreateInput = {
+  publicId?: string
   name: string
+  visibility?: $Enums.GroupVisibility
+  createdAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedGroupsInput
-  users?: Prisma.UserCreateNestedManyWithoutGroupsInput
   members?: Prisma.GroupMemberCreateNestedManyWithoutGroupInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotCreateNestedManyWithoutGroupInput
 }
 
 export type GroupUncheckedCreateInput = {
   id?: number
+  publicId?: string
   name: string
+  visibility?: $Enums.GroupVisibility
   ownerId: number
-  users?: Prisma.UserUncheckedCreateNestedManyWithoutGroupsInput
+  createdAt?: Date | string
   members?: Prisma.GroupMemberUncheckedCreateNestedManyWithoutGroupInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUncheckedCreateNestedManyWithoutGroupInput
 }
 
 export type GroupUpdateInput = {
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGroupsNestedInput
-  users?: Prisma.UserUpdateManyWithoutGroupsNestedInput
   members?: Prisma.GroupMemberUpdateManyWithoutGroupNestedInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUpdateManyWithoutGroupNestedInput
 }
 
 export type GroupUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
-  users?: Prisma.UserUncheckedUpdateManyWithoutGroupsNestedInput
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.GroupMemberUncheckedUpdateManyWithoutGroupNestedInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUncheckedUpdateManyWithoutGroupNestedInput
 }
 
 export type GroupCreateManyInput = {
   id?: number
+  publicId?: string
   name: string
+  visibility?: $Enums.GroupVisibility
   ownerId: number
+  createdAt?: Date | string
 }
 
 export type GroupUpdateManyMutationInput = {
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type GroupUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type GroupListRelationFilter = {
@@ -315,8 +365,11 @@ export type GroupOrderByRelationAggregateInput = {
 
 export type GroupCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  publicId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  visibility?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type GroupAvgOrderByAggregateInput = {
@@ -326,14 +379,20 @@ export type GroupAvgOrderByAggregateInput = {
 
 export type GroupMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  publicId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  visibility?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type GroupMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  publicId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  visibility?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
 }
 
 export type GroupSumOrderByAggregateInput = {
@@ -346,22 +405,10 @@ export type GroupScalarRelationFilter = {
   isNot?: Prisma.GroupWhereInput
 }
 
-export type GroupCreateNestedManyWithoutUsersInput = {
-  create?: Prisma.XOR<Prisma.GroupCreateWithoutUsersInput, Prisma.GroupUncheckedCreateWithoutUsersInput> | Prisma.GroupCreateWithoutUsersInput[] | Prisma.GroupUncheckedCreateWithoutUsersInput[]
-  connectOrCreate?: Prisma.GroupCreateOrConnectWithoutUsersInput | Prisma.GroupCreateOrConnectWithoutUsersInput[]
-  connect?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-}
-
 export type GroupCreateNestedManyWithoutOwnerInput = {
   create?: Prisma.XOR<Prisma.GroupCreateWithoutOwnerInput, Prisma.GroupUncheckedCreateWithoutOwnerInput> | Prisma.GroupCreateWithoutOwnerInput[] | Prisma.GroupUncheckedCreateWithoutOwnerInput[]
   connectOrCreate?: Prisma.GroupCreateOrConnectWithoutOwnerInput | Prisma.GroupCreateOrConnectWithoutOwnerInput[]
   createMany?: Prisma.GroupCreateManyOwnerInputEnvelope
-  connect?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-}
-
-export type GroupUncheckedCreateNestedManyWithoutUsersInput = {
-  create?: Prisma.XOR<Prisma.GroupCreateWithoutUsersInput, Prisma.GroupUncheckedCreateWithoutUsersInput> | Prisma.GroupCreateWithoutUsersInput[] | Prisma.GroupUncheckedCreateWithoutUsersInput[]
-  connectOrCreate?: Prisma.GroupCreateOrConnectWithoutUsersInput | Prisma.GroupCreateOrConnectWithoutUsersInput[]
   connect?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
 }
 
@@ -370,19 +417,6 @@ export type GroupUncheckedCreateNestedManyWithoutOwnerInput = {
   connectOrCreate?: Prisma.GroupCreateOrConnectWithoutOwnerInput | Prisma.GroupCreateOrConnectWithoutOwnerInput[]
   createMany?: Prisma.GroupCreateManyOwnerInputEnvelope
   connect?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-}
-
-export type GroupUpdateManyWithoutUsersNestedInput = {
-  create?: Prisma.XOR<Prisma.GroupCreateWithoutUsersInput, Prisma.GroupUncheckedCreateWithoutUsersInput> | Prisma.GroupCreateWithoutUsersInput[] | Prisma.GroupUncheckedCreateWithoutUsersInput[]
-  connectOrCreate?: Prisma.GroupCreateOrConnectWithoutUsersInput | Prisma.GroupCreateOrConnectWithoutUsersInput[]
-  upsert?: Prisma.GroupUpsertWithWhereUniqueWithoutUsersInput | Prisma.GroupUpsertWithWhereUniqueWithoutUsersInput[]
-  set?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-  disconnect?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-  delete?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-  connect?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-  update?: Prisma.GroupUpdateWithWhereUniqueWithoutUsersInput | Prisma.GroupUpdateWithWhereUniqueWithoutUsersInput[]
-  updateMany?: Prisma.GroupUpdateManyWithWhereWithoutUsersInput | Prisma.GroupUpdateManyWithWhereWithoutUsersInput[]
-  deleteMany?: Prisma.GroupScalarWhereInput | Prisma.GroupScalarWhereInput[]
 }
 
 export type GroupUpdateManyWithoutOwnerNestedInput = {
@@ -399,19 +433,6 @@ export type GroupUpdateManyWithoutOwnerNestedInput = {
   deleteMany?: Prisma.GroupScalarWhereInput | Prisma.GroupScalarWhereInput[]
 }
 
-export type GroupUncheckedUpdateManyWithoutUsersNestedInput = {
-  create?: Prisma.XOR<Prisma.GroupCreateWithoutUsersInput, Prisma.GroupUncheckedCreateWithoutUsersInput> | Prisma.GroupCreateWithoutUsersInput[] | Prisma.GroupUncheckedCreateWithoutUsersInput[]
-  connectOrCreate?: Prisma.GroupCreateOrConnectWithoutUsersInput | Prisma.GroupCreateOrConnectWithoutUsersInput[]
-  upsert?: Prisma.GroupUpsertWithWhereUniqueWithoutUsersInput | Prisma.GroupUpsertWithWhereUniqueWithoutUsersInput[]
-  set?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-  disconnect?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-  delete?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-  connect?: Prisma.GroupWhereUniqueInput | Prisma.GroupWhereUniqueInput[]
-  update?: Prisma.GroupUpdateWithWhereUniqueWithoutUsersInput | Prisma.GroupUpdateWithWhereUniqueWithoutUsersInput[]
-  updateMany?: Prisma.GroupUpdateManyWithWhereWithoutUsersInput | Prisma.GroupUpdateManyWithWhereWithoutUsersInput[]
-  deleteMany?: Prisma.GroupScalarWhereInput | Prisma.GroupScalarWhereInput[]
-}
-
 export type GroupUncheckedUpdateManyWithoutOwnerNestedInput = {
   create?: Prisma.XOR<Prisma.GroupCreateWithoutOwnerInput, Prisma.GroupUncheckedCreateWithoutOwnerInput> | Prisma.GroupCreateWithoutOwnerInput[] | Prisma.GroupUncheckedCreateWithoutOwnerInput[]
   connectOrCreate?: Prisma.GroupCreateOrConnectWithoutOwnerInput | Prisma.GroupCreateOrConnectWithoutOwnerInput[]
@@ -424,6 +445,10 @@ export type GroupUncheckedUpdateManyWithoutOwnerNestedInput = {
   update?: Prisma.GroupUpdateWithWhereUniqueWithoutOwnerInput | Prisma.GroupUpdateWithWhereUniqueWithoutOwnerInput[]
   updateMany?: Prisma.GroupUpdateManyWithWhereWithoutOwnerInput | Prisma.GroupUpdateManyWithWhereWithoutOwnerInput[]
   deleteMany?: Prisma.GroupScalarWhereInput | Prisma.GroupScalarWhereInput[]
+}
+
+export type EnumGroupVisibilityFieldUpdateOperationsInput = {
+  set?: $Enums.GroupVisibility
 }
 
 export type GroupCreateNestedOneWithoutMembersInput = {
@@ -454,37 +479,21 @@ export type GroupUpdateOneRequiredWithoutLeaderboardSnapshotsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.GroupUpdateToOneWithWhereWithoutLeaderboardSnapshotsInput, Prisma.GroupUpdateWithoutLeaderboardSnapshotsInput>, Prisma.GroupUncheckedUpdateWithoutLeaderboardSnapshotsInput>
 }
 
-export type GroupCreateWithoutUsersInput = {
-  name: string
-  owner: Prisma.UserCreateNestedOneWithoutOwnedGroupsInput
-  members?: Prisma.GroupMemberCreateNestedManyWithoutGroupInput
-  leaderboardSnapshots?: Prisma.LeaderboardSnapshotCreateNestedManyWithoutGroupInput
-}
-
-export type GroupUncheckedCreateWithoutUsersInput = {
-  id?: number
-  name: string
-  ownerId: number
-  members?: Prisma.GroupMemberUncheckedCreateNestedManyWithoutGroupInput
-  leaderboardSnapshots?: Prisma.LeaderboardSnapshotUncheckedCreateNestedManyWithoutGroupInput
-}
-
-export type GroupCreateOrConnectWithoutUsersInput = {
-  where: Prisma.GroupWhereUniqueInput
-  create: Prisma.XOR<Prisma.GroupCreateWithoutUsersInput, Prisma.GroupUncheckedCreateWithoutUsersInput>
-}
-
 export type GroupCreateWithoutOwnerInput = {
+  publicId?: string
   name: string
-  users?: Prisma.UserCreateNestedManyWithoutGroupsInput
+  visibility?: $Enums.GroupVisibility
+  createdAt?: Date | string
   members?: Prisma.GroupMemberCreateNestedManyWithoutGroupInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotCreateNestedManyWithoutGroupInput
 }
 
 export type GroupUncheckedCreateWithoutOwnerInput = {
   id?: number
+  publicId?: string
   name: string
-  users?: Prisma.UserUncheckedCreateNestedManyWithoutGroupsInput
+  visibility?: $Enums.GroupVisibility
+  createdAt?: Date | string
   members?: Prisma.GroupMemberUncheckedCreateNestedManyWithoutGroupInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUncheckedCreateNestedManyWithoutGroupInput
 }
@@ -497,31 +506,6 @@ export type GroupCreateOrConnectWithoutOwnerInput = {
 export type GroupCreateManyOwnerInputEnvelope = {
   data: Prisma.GroupCreateManyOwnerInput | Prisma.GroupCreateManyOwnerInput[]
   skipDuplicates?: boolean
-}
-
-export type GroupUpsertWithWhereUniqueWithoutUsersInput = {
-  where: Prisma.GroupWhereUniqueInput
-  update: Prisma.XOR<Prisma.GroupUpdateWithoutUsersInput, Prisma.GroupUncheckedUpdateWithoutUsersInput>
-  create: Prisma.XOR<Prisma.GroupCreateWithoutUsersInput, Prisma.GroupUncheckedCreateWithoutUsersInput>
-}
-
-export type GroupUpdateWithWhereUniqueWithoutUsersInput = {
-  where: Prisma.GroupWhereUniqueInput
-  data: Prisma.XOR<Prisma.GroupUpdateWithoutUsersInput, Prisma.GroupUncheckedUpdateWithoutUsersInput>
-}
-
-export type GroupUpdateManyWithWhereWithoutUsersInput = {
-  where: Prisma.GroupScalarWhereInput
-  data: Prisma.XOR<Prisma.GroupUpdateManyMutationInput, Prisma.GroupUncheckedUpdateManyWithoutUsersInput>
-}
-
-export type GroupScalarWhereInput = {
-  AND?: Prisma.GroupScalarWhereInput | Prisma.GroupScalarWhereInput[]
-  OR?: Prisma.GroupScalarWhereInput[]
-  NOT?: Prisma.GroupScalarWhereInput | Prisma.GroupScalarWhereInput[]
-  id?: Prisma.IntFilter<"Group"> | number
-  name?: Prisma.StringFilter<"Group"> | string
-  ownerId?: Prisma.IntFilter<"Group"> | number
 }
 
 export type GroupUpsertWithWhereUniqueWithoutOwnerInput = {
@@ -540,18 +524,34 @@ export type GroupUpdateManyWithWhereWithoutOwnerInput = {
   data: Prisma.XOR<Prisma.GroupUpdateManyMutationInput, Prisma.GroupUncheckedUpdateManyWithoutOwnerInput>
 }
 
+export type GroupScalarWhereInput = {
+  AND?: Prisma.GroupScalarWhereInput | Prisma.GroupScalarWhereInput[]
+  OR?: Prisma.GroupScalarWhereInput[]
+  NOT?: Prisma.GroupScalarWhereInput | Prisma.GroupScalarWhereInput[]
+  id?: Prisma.IntFilter<"Group"> | number
+  publicId?: Prisma.StringFilter<"Group"> | string
+  name?: Prisma.StringFilter<"Group"> | string
+  visibility?: Prisma.EnumGroupVisibilityFilter<"Group"> | $Enums.GroupVisibility
+  ownerId?: Prisma.IntFilter<"Group"> | number
+  createdAt?: Prisma.DateTimeFilter<"Group"> | Date | string
+}
+
 export type GroupCreateWithoutMembersInput = {
+  publicId?: string
   name: string
+  visibility?: $Enums.GroupVisibility
+  createdAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedGroupsInput
-  users?: Prisma.UserCreateNestedManyWithoutGroupsInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotCreateNestedManyWithoutGroupInput
 }
 
 export type GroupUncheckedCreateWithoutMembersInput = {
   id?: number
+  publicId?: string
   name: string
+  visibility?: $Enums.GroupVisibility
   ownerId: number
-  users?: Prisma.UserUncheckedCreateNestedManyWithoutGroupsInput
+  createdAt?: Date | string
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUncheckedCreateNestedManyWithoutGroupInput
 }
 
@@ -572,32 +572,40 @@ export type GroupUpdateToOneWithWhereWithoutMembersInput = {
 }
 
 export type GroupUpdateWithoutMembersInput = {
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGroupsNestedInput
-  users?: Prisma.UserUpdateManyWithoutGroupsNestedInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUpdateManyWithoutGroupNestedInput
 }
 
 export type GroupUncheckedUpdateWithoutMembersInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
-  users?: Prisma.UserUncheckedUpdateManyWithoutGroupsNestedInput
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUncheckedUpdateManyWithoutGroupNestedInput
 }
 
 export type GroupCreateWithoutLeaderboardSnapshotsInput = {
+  publicId?: string
   name: string
+  visibility?: $Enums.GroupVisibility
+  createdAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedGroupsInput
-  users?: Prisma.UserCreateNestedManyWithoutGroupsInput
   members?: Prisma.GroupMemberCreateNestedManyWithoutGroupInput
 }
 
 export type GroupUncheckedCreateWithoutLeaderboardSnapshotsInput = {
   id?: number
+  publicId?: string
   name: string
+  visibility?: $Enums.GroupVisibility
   ownerId: number
-  users?: Prisma.UserUncheckedCreateNestedManyWithoutGroupsInput
+  createdAt?: Date | string
   members?: Prisma.GroupMemberUncheckedCreateNestedManyWithoutGroupInput
 }
 
@@ -618,64 +626,57 @@ export type GroupUpdateToOneWithWhereWithoutLeaderboardSnapshotsInput = {
 }
 
 export type GroupUpdateWithoutLeaderboardSnapshotsInput = {
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGroupsNestedInput
-  users?: Prisma.UserUpdateManyWithoutGroupsNestedInput
   members?: Prisma.GroupMemberUpdateManyWithoutGroupNestedInput
 }
 
 export type GroupUncheckedUpdateWithoutLeaderboardSnapshotsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
-  users?: Prisma.UserUncheckedUpdateManyWithoutGroupsNestedInput
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.GroupMemberUncheckedUpdateManyWithoutGroupNestedInput
 }
 
 export type GroupCreateManyOwnerInput = {
   id?: number
+  publicId?: string
   name: string
-}
-
-export type GroupUpdateWithoutUsersInput = {
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  owner?: Prisma.UserUpdateOneRequiredWithoutOwnedGroupsNestedInput
-  members?: Prisma.GroupMemberUpdateManyWithoutGroupNestedInput
-  leaderboardSnapshots?: Prisma.LeaderboardSnapshotUpdateManyWithoutGroupNestedInput
-}
-
-export type GroupUncheckedUpdateWithoutUsersInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  ownerId?: Prisma.IntFieldUpdateOperationsInput | number
-  members?: Prisma.GroupMemberUncheckedUpdateManyWithoutGroupNestedInput
-  leaderboardSnapshots?: Prisma.LeaderboardSnapshotUncheckedUpdateManyWithoutGroupNestedInput
-}
-
-export type GroupUncheckedUpdateManyWithoutUsersInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  ownerId?: Prisma.IntFieldUpdateOperationsInput | number
+  visibility?: $Enums.GroupVisibility
+  createdAt?: Date | string
 }
 
 export type GroupUpdateWithoutOwnerInput = {
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  users?: Prisma.UserUpdateManyWithoutGroupsNestedInput
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.GroupMemberUpdateManyWithoutGroupNestedInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUpdateManyWithoutGroupNestedInput
 }
 
 export type GroupUncheckedUpdateWithoutOwnerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  users?: Prisma.UserUncheckedUpdateManyWithoutGroupsNestedInput
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.GroupMemberUncheckedUpdateManyWithoutGroupNestedInput
   leaderboardSnapshots?: Prisma.LeaderboardSnapshotUncheckedUpdateManyWithoutGroupNestedInput
 }
 
 export type GroupUncheckedUpdateManyWithoutOwnerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  publicId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  visibility?: Prisma.EnumGroupVisibilityFieldUpdateOperationsInput | $Enums.GroupVisibility
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -684,13 +685,11 @@ export type GroupUncheckedUpdateManyWithoutOwnerInput = {
  */
 
 export type GroupCountOutputType = {
-  users: number
   members: number
   leaderboardSnapshots: number
 }
 
 export type GroupCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  users?: boolean | GroupCountOutputTypeCountUsersArgs
   members?: boolean | GroupCountOutputTypeCountMembersArgs
   leaderboardSnapshots?: boolean | GroupCountOutputTypeCountLeaderboardSnapshotsArgs
 }
@@ -703,13 +702,6 @@ export type GroupCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extens
    * Select specific fields to fetch from the GroupCountOutputType
    */
   select?: Prisma.GroupCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * GroupCountOutputType without action
- */
-export type GroupCountOutputTypeCountUsersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.UserWhereInput
 }
 
 /**
@@ -729,10 +721,12 @@ export type GroupCountOutputTypeCountLeaderboardSnapshotsArgs<ExtArgs extends ru
 
 export type GroupSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  publicId?: boolean
   name?: boolean
+  visibility?: boolean
   ownerId?: boolean
+  createdAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  users?: boolean | Prisma.Group$usersArgs<ExtArgs>
   members?: boolean | Prisma.Group$membersArgs<ExtArgs>
   leaderboardSnapshots?: boolean | Prisma.Group$leaderboardSnapshotsArgs<ExtArgs>
   _count?: boolean | Prisma.GroupCountOutputTypeDefaultArgs<ExtArgs>
@@ -740,28 +734,36 @@ export type GroupSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 
 export type GroupSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  publicId?: boolean
   name?: boolean
+  visibility?: boolean
   ownerId?: boolean
+  createdAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["group"]>
 
 export type GroupSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  publicId?: boolean
   name?: boolean
+  visibility?: boolean
   ownerId?: boolean
+  createdAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["group"]>
 
 export type GroupSelectScalar = {
   id?: boolean
+  publicId?: boolean
   name?: boolean
+  visibility?: boolean
   ownerId?: boolean
+  createdAt?: boolean
 }
 
-export type GroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "ownerId", ExtArgs["result"]["group"]>
+export type GroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "publicId" | "name" | "visibility" | "ownerId" | "createdAt", ExtArgs["result"]["group"]>
 export type GroupInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  users?: boolean | Prisma.Group$usersArgs<ExtArgs>
   members?: boolean | Prisma.Group$membersArgs<ExtArgs>
   leaderboardSnapshots?: boolean | Prisma.Group$leaderboardSnapshotsArgs<ExtArgs>
   _count?: boolean | Prisma.GroupCountOutputTypeDefaultArgs<ExtArgs>
@@ -777,14 +779,16 @@ export type $GroupPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   name: "Group"
   objects: {
     owner: Prisma.$UserPayload<ExtArgs>
-    users: Prisma.$UserPayload<ExtArgs>[]
     members: Prisma.$GroupMemberPayload<ExtArgs>[]
     leaderboardSnapshots: Prisma.$LeaderboardSnapshotPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
+    publicId: string
     name: string
+    visibility: $Enums.GroupVisibility
     ownerId: number
+    createdAt: Date
   }, ExtArgs["result"]["group"]>
   composites: {}
 }
@@ -1180,7 +1184,6 @@ readonly fields: GroupFieldRefs;
 export interface Prisma__GroupClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   owner<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  users<T extends Prisma.Group$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Group$usersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   members<T extends Prisma.Group$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Group$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GroupMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   leaderboardSnapshots<T extends Prisma.Group$leaderboardSnapshotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Group$leaderboardSnapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeaderboardSnapshotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1213,8 +1216,11 @@ export interface Prisma__GroupClient<T, Null = never, ExtArgs extends runtime.Ty
  */
 export interface GroupFieldRefs {
   readonly id: Prisma.FieldRef<"Group", 'Int'>
+  readonly publicId: Prisma.FieldRef<"Group", 'String'>
   readonly name: Prisma.FieldRef<"Group", 'String'>
+  readonly visibility: Prisma.FieldRef<"Group", 'GroupVisibility'>
   readonly ownerId: Prisma.FieldRef<"Group", 'Int'>
+  readonly createdAt: Prisma.FieldRef<"Group", 'DateTime'>
 }
     
 
@@ -1608,30 +1614,6 @@ export type GroupDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Limit how many Groups to delete.
    */
   limit?: number
-}
-
-/**
- * Group.users
- */
-export type Group$usersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the User
-   */
-  select?: Prisma.UserSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the User
-   */
-  omit?: Prisma.UserOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserInclude<ExtArgs> | null
-  where?: Prisma.UserWhereInput
-  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
-  cursor?: Prisma.UserWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 
 /**
