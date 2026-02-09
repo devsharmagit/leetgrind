@@ -113,8 +113,15 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
         toast.success(result.message || 'Stats refreshed');
         await loadLeaderboard();
         
-        // Save a snapshot after refresh
-        await saveLeaderboardSnapshot(group.id);
+        // Save a snapshot after refresh (only if group has 5+ members)
+        const snapshotResult = await saveLeaderboardSnapshot(group.id);
+        if (!snapshotResult.success && snapshotResult.error?.includes('at least 5 members')) {
+          // Silently skip snapshot for groups with < 5 members (not an error)
+          console.log('Snapshot not saved: Group has fewer than 5 members');
+        } else if (!snapshotResult.success) {
+          // Show error for other snapshot failures
+          toast.error(snapshotResult.error || 'Failed to save snapshot');
+        }
       } else {
         toast.error(result.error || 'Failed to refresh stats');
       }

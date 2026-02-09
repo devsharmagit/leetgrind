@@ -9,6 +9,31 @@ export interface AddMemberInput {
   leetcodeUsername: string;
 }
 
+// Validate LeetCode username format
+// LeetCode usernames: 1-15 chars, alphanumeric + underscore/hyphen, no special chars
+function validateUsernameFormat(username: string): { valid: boolean; error?: string } {
+  if (!username || username.length === 0) {
+    return { valid: false, error: 'Username cannot be empty' };
+  }
+  
+  if (username.length > 15) {
+    return { valid: false, error: 'Username too long (max 15 characters)' };
+  }
+  
+  // LeetCode usernames: letters, numbers, underscore, hyphen only
+  const validPattern = /^[a-zA-Z0-9_-]+$/;
+  if (!validPattern.test(username)) {
+    return { valid: false, error: 'Username contains invalid characters (only letters, numbers, _, - allowed)' };
+  }
+  
+  return { valid: true };
+}
+
+// Normalize username: trim and lowercase
+function normalizeUsername(username: string): string {
+  return username.trim().toLowerCase();
+}
+
 export async function createGroup(name: string) {
   // Check if user is logged in
   const session = await auth();
@@ -119,6 +144,14 @@ export async function addMemberToGroup(input: AddMemberInput) {
   }
 
   try {
+    // Validate and normalize username
+    const normalizedUsername = normalizeUsername(input.leetcodeUsername);
+    const formatValidation = validateUsernameFormat(normalizedUsername);
+    
+    if (!formatValidation.valid) {
+      return { success: false, error: formatValidation.error };
+    }
+
     // Find the user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -141,15 +174,15 @@ export async function addMemberToGroup(input: AddMemberInput) {
       return { success: false, error: 'You can only add members to groups you own.' };
     }
 
-    // First, find or create the LeetCode profile
+    // First, find or create the LeetCode profile with normalized username
     let leetcodeProfile = await prisma.leetcodeProfile.findUnique({
-      where: { username: input.leetcodeUsername },
+      where: { username: normalizedUsername },
     });
 
     if (!leetcodeProfile) {
       leetcodeProfile = await prisma.leetcodeProfile.create({
         data: {
-          username: input.leetcodeUsername,
+          username: normalizedUsername,
         },
       });
     }
@@ -471,12 +504,23 @@ export async function addMembersToGroup(groupId: number, usernames: string[]) {
 
     // Process each username
     for (const rawUsername of usernames) {
-      const username = rawUsername.trim();
+      const username = normalizeUsername(rawUsername);
       
       if (!username) continue;
 
+      // Validate username format
+      const formatValidation = validateUsernameFormat(username);
+      if (!formatValidation.valid) {
+        results.push({
+          username: rawUsername,
+          status: 'error',
+          message: formatValidation.error || 'Invalid format',
+        });
+        continue;
+      }
+
       // Check if already in group
-      if (existingUsernames.has(username.toLowerCase())) {
+      if (existingUsernames.has(username)) {
         results.push({
           username,
           status: 'skipped',
@@ -485,20 +529,20 @@ export async function addMembersToGroup(groupId: number, usernames: string[]) {
         continue;
       }
 
-      // Validate LeetCode username
+      // Validate LeetCode username exists
       const validation = await validateLeetCodeUsername(username);
       
       if (!validation.valid) {
         results.push({
           username,
           status: 'error',
-          message: validation.error || 'Invalid username',
+          message: validation.error || 'Not found on LeetCode',
         });
         continue;
       }
 
       try {
-        // Find or create the LeetCode profile
+        // Find or create the LeetCode profile with normalized username
         let leetcodeProfile = await prisma.leetcodeProfile.findUnique({
           where: { username },
         });
@@ -517,7 +561,7 @@ export async function addMembersToGroup(groupId: number, usernames: string[]) {
           },
         });
 
-        existingUsernames.add(username.toLowerCase());
+        existingUsernames.add(username);
         
         results.push({
           username,

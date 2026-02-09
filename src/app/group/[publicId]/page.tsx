@@ -36,6 +36,8 @@ async function PublicGroupContent({ publicId }: { publicId: string }) {
   }
 
   const { data: group } = result;
+  const memberCount = group._count.members;
+  const hasMinimumMembers = memberCount >= 5;
 
   return (
     <div className="min-h-screen bg-black">
@@ -53,9 +55,32 @@ async function PublicGroupContent({ publicId }: { publicId: string }) {
               <div className="flex items-center gap-2 mb-4">
                 <Users className="w-5 h-5 text-neutral-400" />
                 <span className="text-neutral-300">
-                  {group._count.members} {group._count.members === 1 ? 'Member' : 'Members'}
+                  {memberCount} {memberCount === 1 ? 'Member' : 'Members'}
                 </span>
               </div>
+
+              {/* Minimum Members Warning */}
+              {!hasMinimumMembers && (
+                <div className="mb-4 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="flex items-start gap-3">
+                    <Lock className="w-5 h-5 text-yellow-500 mt-0.5 shrink-0" />
+                    <div>
+                      <h3 className="text-yellow-500 font-semibold mb-1">
+                        Leaderboard Locked
+                      </h3>
+                      <p className="text-neutral-300 text-sm">
+                        This group needs at least <strong>5 members</strong> to display the public leaderboard.
+                        Currently has {memberCount} {memberCount === 1 ? 'member' : 'members'}.
+                        {memberCount < 5 && (
+                          <span className="block mt-1 text-yellow-400">
+                            {5 - memberCount} more {5 - memberCount === 1 ? 'member' : 'members'} needed.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {group.members.length > 0 && (
                 <div className="space-y-2">

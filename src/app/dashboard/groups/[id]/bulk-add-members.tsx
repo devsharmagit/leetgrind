@@ -119,6 +119,8 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
         </CardTitle>
         <CardDescription className="text-neutral-500">
           Enter LeetCode usernames (one per line, comma-separated, or space-separated)
+          <br />
+          <span className="text-xs">Valid: letters, numbers, underscore, hyphen (max 15 chars each)</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4 space-y-4">

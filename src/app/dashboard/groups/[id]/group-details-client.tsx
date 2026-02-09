@@ -118,6 +118,49 @@ export default function GroupDetailsClient({ group, isOwner }: GroupDetailsClien
         )}
       </div>
 
+      {/* Minimum Members Warning */}
+      {group._count.members < 5 && (
+        <Card className="border-yellow-500/20 bg-yellow-500/5">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center shrink-0">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-yellow-500 font-semibold mb-1">
+                  {group._count.members === 0 ? 'Add Members to Unlock Leaderboard' : 'Almost There! Add More Members'}
+                </h3>
+                <p className="text-neutral-300 text-sm mb-2">
+                  Your group needs at least <strong className="text-white">5 members</strong> to enable:
+                </p>
+                <ul className="text-neutral-400 text-sm space-y-1 mb-3 ml-4 list-disc">
+                  <li>Public leaderboard rankings</li>
+                  <li>Historical snapshots and tracking</li>
+                  <li>Top gainers leaderboard</li>
+                  <li>Member performance analytics</li>
+                </ul>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-neutral-800 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="bg-yellow-500 h-full transition-all duration-300"
+                      style={{ width: `${(group._count.members / 5) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-yellow-500 font-semibold text-sm whitespace-nowrap">
+                    {group._count.members} / 5
+                  </span>
+                </div>
+                {5 - group._count.members > 0 && (
+                  <p className="text-yellow-400 text-xs mt-2">
+                    Add {5 - group._count.members} more {5 - group._count.members === 1 ? 'member' : 'members'} to unlock all features →
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Leaderboard Link Section */}
       <Card className="border-neutral-800 bg-neutral-900">
         <CardContent className="py-6">

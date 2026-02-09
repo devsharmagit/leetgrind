@@ -87,7 +87,7 @@ export default function AddMemberDialog({
                 autoFocus
               />
               <p className="text-xs text-slate-500">
-                Enter the LeetCode username of the person you want to add
+                Valid format: letters, numbers, underscore (_), hyphen (-), max 15 characters
               </p>
             </div>
           </div>

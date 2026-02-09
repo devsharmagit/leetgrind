@@ -367,6 +367,27 @@ export async function saveLeaderboardSnapshot(groupId: number) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Check member count - require minimum 5 members
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      include: {
+        _count: {
+          select: { members: true },
+        },
+      },
+    });
+
+    if (!group) {
+      return { success: false, error: 'Group not found' };
+    }
+
+    if (group._count.members < 5) {
+      return { 
+        success: false, 
+        error: 'Cannot save snapshot: Group must have at least 5 members to create leaderboard snapshots' 
+      };
+    }
+
     // Get the current leaderboard data
     const leaderboardResult = await getGroupLeaderboard(groupId);
     const gainersResult = await getGroupGainers(groupId, 7);
