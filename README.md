@@ -13,8 +13,26 @@ The app automatically collects daily stats, stores historical snapshots, and gen
 - 🚀 **Biggest Gainers** (rank & problems solved)
 - 🏆 **Most Impressive Profile**
 - 📅 **Historical Tracking via Snapshots**
-- 🔄 **Automated Daily Updates**
+- 🔄 **Automated Daily Updates** (Vercel Cron)
 - 📤 **Export-ready summaries** (WhatsApp / CSV / Screenshot)
+- 👥 **Group Management** (minimum 5 members for leaderboards)
+- 🔐 **Authentication** (Google OAuth via NextAuth)
+
+---
+
+## 🤖 Automated Stats Collection
+
+The app uses **Vercel Cron Jobs** to automatically fetch and update LeetCode stats daily.
+
+- **Schedule:** Every day at 00:00 UTC
+- **Endpoint:** `/api/cron/daily-stats`
+- **Features:**
+  - Batch processing with concurrency control
+  - Rate limiting protection
+  - Automatic snapshot generation
+  - Idempotent operations
+
+📖 **[Full Cron Setup Guide →](./CRON_SETUP.md)**
 
 ---
 
@@ -178,19 +196,44 @@ score =
 
 ---
 
-## ⏰ Cron Job Setup
+## ⏰ Automated Daily Updates
 
-### Option 1: GitHub Actions
+The app uses **Vercel Cron Jobs** for automated stats collection:
 
-Runs once per day and triggers:
+```bash
+# 1. Generate a cron secret
+openssl rand -base64 32
 
+# 2. Add to .env.local (development)
+CRON_SECRET="your-generated-secret"
+
+# 3. Add to Vercel environment variables (production)
+# Settings → Environment Variables → CRON_SECRET
 ```
-/api/snapshots/collect
+
+**Schedule:** Every day at 00:00 UTC (configured in `vercel.json`)
+
+The cron job automatically:
+- ✅ Fetches latest LeetCode stats for all profiles
+- ✅ Updates daily statistics
+- ✅ Generates leaderboard snapshots (for groups with 5+ members)
+- ✅ Calculates top gainers
+
+**📖 [Complete Cron Setup Guide →](./CRON_SETUP.md)**
+
+**Test locally:**
+```bash
+curl http://localhost:3000/api/cron/daily-stats \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
-### Option 2: Vercel Cron
+---
 
-Configured using `vercel.json`.
+## 🔌 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/cron/daily-stats` | Daily stats cron (requires auth) |
 
 ---
 
@@ -252,10 +295,15 @@ NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
+CRON_SECRET="your-cron-secret-here"
 ```
 
-**Generate NEXTAUTH_SECRET:**
+**Generate secrets:**
 ```bash
+# For NEXTAUTH_SECRET
+openssl rand -base64 32
+
+# For CRON_SECRET (used by automated stats cron)
 openssl rand -base64 32
 ```
 
