@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 interface GroupCardProps {
   group: {
     id: number;
+    publicId: string;
     name: string;
     ownerId: number;
     owner: {
@@ -162,11 +163,11 @@ export default function GroupCard({ group, userId }: GroupCardProps) {
           <Button
             variant="outline"
             className="w-full border-neutral-700 bg-transparent hover:border-neutral-600 hover:bg-neutral-800 text-neutral-300 hover:text-white transition-all"
-            onClick={() => router.push(`/dashboard/groups/${group.id}`)}
+            onClick={() => router.push(`/dashboard/groups/${group.publicId}`)}
           >
             View Details
           </Button>
-          <Link href={`/dashboard/groups/${group.id}/leaderboard`} className="w-full">
+          <Link href={`/dashboard/groups/${group.publicId}/leaderboard`} className="w-full">
             <Button
               variant="outline"
               className="w-full border-yellow-500/30 bg-yellow-500/5 hover:border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500 hover:text-yellow-400 transition-all"

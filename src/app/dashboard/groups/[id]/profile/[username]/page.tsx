@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/auth';
 import { getGroupDetails } from '@/app/actions/groups';
 import { getProfileHistory } from '@/app/actions/leaderboard';
+import { prisma } from '@/lib/prisma';
 import ProfileHistoryClient from './profile-history-client';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -10,11 +11,29 @@ interface PageProps {
   params: Promise<{ id: string; username: string }>;
 }
 
-async function ProfileHistoryContent({ groupId, username }: { groupId: number; username: string }) {
+async function ProfileHistoryContent({ groupIdentifier, username }: { groupIdentifier: string; username: string }) {
   const session = await auth();
   
   if (!session?.user?.email) {
     redirect('/login');
+  }
+
+  // Check if identifier is a number (internal id) or a cuid (publicId)
+  let groupId: number;
+  
+  if (/^\d+$/.test(groupIdentifier)) {
+    groupId = parseInt(groupIdentifier, 10);
+  } else {
+    const group = await prisma.group.findUnique({
+      where: { publicId: groupIdentifier },
+      select: { id: true },
+    });
+    
+    if (!group) {
+      notFound();
+    }
+    
+    groupId = group.id;
   }
 
   const [groupResult, profileResult] = await Promise.all([
@@ -58,17 +77,12 @@ function ProfileSkeleton() {
 
 export default async function ProfileHistoryPage({ params }: PageProps) {
   const { id, username } = await params;
-  const groupId = parseInt(id, 10);
-  
-  if (isNaN(groupId)) {
-    notFound();
-  }
 
   return (
     <div className="min-h-screen bg-black">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Suspense fallback={<ProfileSkeleton />}>
-          <ProfileHistoryContent groupId={groupId} username={decodeURIComponent(username)} />
+          <ProfileHistoryContent groupIdentifier={id} username={decodeURIComponent(username)} />
         </Suspense>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/auth';
 import { getGroupDetails } from '@/app/actions/groups';
+import { prisma } from '@/lib/prisma';
 import GroupDetailsClient from './group-details-client';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -9,11 +10,31 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-async function GroupDetailsContent({ groupId }: { groupId: number }) {
+async function GroupDetailsContent({ groupIdentifier }: { groupIdentifier: string }) {
   const session = await auth();
   
   if (!session?.user?.email) {
     redirect('/login');
+  }
+
+  // Check if identifier is a number (internal id) or a cuid (publicId)
+  let groupId: number;
+  
+  if (/^\d+$/.test(groupIdentifier)) {
+    // It's a numeric id
+    groupId = parseInt(groupIdentifier, 10);
+  } else {
+    // It's a publicId, look up the internal id
+    const group = await prisma.group.findUnique({
+      where: { publicId: groupIdentifier },
+      select: { id: true },
+    });
+    
+    if (!group) {
+      notFound();
+    }
+    
+    groupId = group.id;
   }
 
   const result = await getGroupDetails(groupId);
@@ -52,17 +73,12 @@ function GroupDetailsSkeleton() {
 
 export default async function GroupDetailsPage({ params }: PageProps) {
   const { id } = await params;
-  const groupId = parseInt(id, 10);
-  
-  if (isNaN(groupId)) {
-    notFound();
-  }
 
   return (
     <div className="min-h-screen bg-black">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Suspense fallback={<GroupDetailsSkeleton />}>
-          <GroupDetailsContent groupId={groupId} />
+          <GroupDetailsContent groupIdentifier={id} />
         </Suspense>
       </div>
     </div>

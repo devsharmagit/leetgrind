@@ -28,6 +28,7 @@ interface DailyStat {
 interface ProfileHistoryClientProps {
   group: {
     id: number;
+    publicId: string;
     name: string;
   };
   profile: {
@@ -87,7 +88,7 @@ export default function ProfileHistoryClient({ group, profile }: ProfileHistoryC
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push(`/dashboard/groups/${group.id}/leaderboard`)}
+            onClick={() => router.push(`/dashboard/groups/${group.publicId}/leaderboard`)}
             className="text-neutral-400 hover:text-white hover:bg-neutral-800"
           >
             <ArrowLeft className="h-5 w-5" />

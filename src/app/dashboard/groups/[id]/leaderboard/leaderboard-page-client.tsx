@@ -46,6 +46,7 @@ interface GainerEntry {
 interface LeaderboardPageClientProps {
   group: {
     id: number;
+    publicId: string;
     name: string;
     ownerId: number;
     owner: {
@@ -152,7 +153,7 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push(`/dashboard/groups/${group.id}`)}
+            onClick={() => router.push(`/dashboard/groups/${group.publicId}`)}
             className="text-neutral-400 hover:text-white hover:bg-neutral-800"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -166,7 +167,7 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/dashboard/groups/${group.id}/leaderboard/history`}>
+          <Link href={`/dashboard/groups/${group.publicId}/leaderboard/history`}>
             <Button
               variant="outline"
               className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
@@ -254,7 +255,7 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
                     <TableCell className="text-yellow-500 text-right">{entry.mediumSolved}</TableCell>
                     <TableCell className="text-red-500 text-right">{entry.hardSolved}</TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/dashboard/groups/${group.id}/profile/${entry.username}`}>
+                      <Link href={`/dashboard/groups/${group.publicId}/profile/${entry.username}`}>
                         <Button
                           variant="ghost"
                           size="sm"

@@ -23,6 +23,7 @@ import BulkAddMembers from './bulk-add-members';
 interface GroupDetailsClientProps {
   group: {
     id: number;
+    publicId: string;
     name: string;
     ownerId: number;
     owner: {
@@ -130,7 +131,7 @@ export default function GroupDetailsClient({ group, isOwner }: GroupDetailsClien
                 <p className="text-neutral-400 text-sm">View rankings, stats, and track progress over time</p>
               </div>
             </div>
-            <Link href={`/dashboard/groups/${group.id}/leaderboard`}>
+            <Link href={`/dashboard/groups/${group.publicId}/leaderboard`}>
               <Button className="bg-white text-black hover:bg-neutral-200">
                 View Leaderboard
               </Button>

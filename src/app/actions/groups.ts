@@ -256,10 +256,7 @@ export async function getGroups() {
 
     const groups = await prisma.group.findMany({
       where: {
-        OR: [
-          { ownerId: user.id },
-          { users: { some: { id: user.id } } },
-        ],
+        ownerId: user.id,
       },
       include: {
         owner: true,
@@ -327,6 +324,60 @@ export async function getGroupDetails(groupId: number) {
     return { success: true, data: group, currentUserId: user?.id ?? null };
   } catch (error) {
     console.error('Error fetching group details:', error);
+    return { success: false, error: 'Failed to fetch group details' };
+  }
+}
+
+export async function getGroupDetailsByPublicId(publicId: string) {
+  try {
+    const group = await prisma.group.findUnique({
+      where: { publicId },
+      include: {
+        owner: true,
+        members: {
+          include: {
+            leetcodeProfile: {
+              include: {
+                stats: {
+                  orderBy: { date: 'desc' },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: { members: true },
+        },
+      },
+    });
+
+    if (!group) {
+      return { success: false, error: 'Group not found' };
+    }
+
+    // Enforce visibility logic
+    if (group.visibility === 'PRIVATE') {
+      return { success: false, error: 'This group is private' };
+    }
+
+    // Return public-safe data (internal id removed from response)
+    return { 
+      success: true, 
+      data: {
+        publicId: group.publicId,
+        name: group.name,
+        visibility: group.visibility,
+        owner: {
+          name: group.owner.name,
+        },
+        members: group.members,
+        _count: group._count,
+        createdAt: group.createdAt,
+      } 
+    };
+  } catch (error) {
+    console.error('Error fetching group details by publicId:', error);
     return { success: false, error: 'Failed to fetch group details' };
   }
 }

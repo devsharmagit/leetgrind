@@ -50,6 +50,7 @@ interface GainerFromSnapshot {
 interface LeaderboardHistoryClientProps {
   group: {
     id: number;
+    publicId: string;
     name: string;
   };
 }
@@ -161,7 +162,7 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => router.push(`/dashboard/groups/${group.id}/leaderboard`)}
+          onClick={() => router.push(`/dashboard/groups/${group.publicId}/leaderboard`)}
           className="text-neutral-400 hover:text-white hover:bg-neutral-800"
         >
           <ArrowLeft className="h-5 w-5" />
