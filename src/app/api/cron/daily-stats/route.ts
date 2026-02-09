@@ -27,25 +27,31 @@ async function processBatch<T, R>(
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
   
-  // Validate secret header
+  // Verify request is from Vercel Cron or authorized source
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
   
-  if (!cronSecret) {
-    console.error('[CRON] CRON_SECRET not configured');
-    return NextResponse.json(
-      { error: 'Cron secret not configured' },
-      { status: 500 }
-    );
-  }
+  // Check if request is from Vercel Cron (production)
+  const isVercelCron = request.headers.get('x-vercel-cron') === '1';
   
-  if (authHeader !== `Bearer ${cronSecret}`) {
-    console.warn('[CRON] Unauthorized access attempt');
+  // Check if request has valid authorization header (for manual testing)
+  const hasValidAuth = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  
+  if (!isVercelCron && !hasValidAuth) {
+    console.warn('[CRON] Unauthorized access attempt', {
+      hasVercelCronHeader: !!request.headers.get('x-vercel-cron'),
+      hasAuthHeader: !!authHeader,
+      hasCronSecret: !!cronSecret,
+    });
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
     );
   }
+  
+  console.log('[CRON] Request authenticated:', {
+    source: isVercelCron ? 'Vercel Cron' : 'Manual (with secret)',
+  });
 
   try {
     console.log('[CRON] Daily stats job started');

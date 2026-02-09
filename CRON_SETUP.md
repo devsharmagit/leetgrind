@@ -17,11 +17,59 @@ The cron job (`/api/cron/daily-stats`) runs automatically every day at **00:00 U
 - **Idempotent**: Safe to run multiple times per day
 - **Concurrent**: Processes 5 profiles simultaneously
 - **Rate-limited**: Built-in delays to respect LeetCode API
-- **Secure**: Requires secret token authorization
+- **Secure**: Vercel Cron authentication + optional secret for manual testing
 
 ---
 
-## 🔐 Environment Setup
+## 🔐 Authentication Methods
+
+The API supports **two authentication methods**:
+
+### 1. Vercel Cron (Production) ⭐ Recommended
+When deployed on Vercel, the cron job automatically includes the `x-vercel-cron: 1` header. **No secret needed!**
+
+**How it works:**
+```
+Vercel Cron Scheduler (midnight UTC)
+    ↓
+    Adds header: x-vercel-cron: 1
+    ↓
+GET /api/cron/daily-stats
+    ↓
+API checks: request.headers.get('x-vercel-cron') === '1'
+    ↓
+✅ Authenticated! Proceeds with stats update
+```
+
+### 2. Manual Testing (Development/Manual Trigger)
+For local testing or manual execution, use the `CRON_SECRET` environment variable.
+
+**How it works:**
+```
+Your curl/test script
+    ↓
+    Adds header: Authorization: Bearer YOUR_SECRET
+    ↓
+GET /api/cron/daily-stats
+    ↓
+API checks: authHeader === `Bearer ${process.env.CRON_SECRET}`
+    ↓
+✅ Authenticated! Proceeds with stats update
+```
+
+**Authentication Logic:**
+```typescript
+const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+const hasValidAuth = cronSecret && authHeader === `Bearer ${cronSecret}`;
+
+if (!isVercelCron && !hasValidAuth) {
+  return 401 Unauthorized;
+}
+```
+
+---
+
+## 🔐 Environment Setup (Optional for Manual Testing)
 
 ### 1. Generate a Cron Secret
 
@@ -37,7 +85,9 @@ openssl rand -base64 32
 CRON_SECRET="your-generated-secret-here"
 ```
 
-**Vercel Deployment:**
+**Vercel Deployment (Optional):**
+Only needed if you want to manually trigger the cron via curl with authorization.
+
 1. Go to your project in Vercel Dashboard
 2. Navigate to **Settings** → **Environment Variables**
 3. Add `CRON_SECRET` with your generated value
@@ -60,6 +110,11 @@ The `vercel.json` file configures the cron schedule:
 }
 ```
 
+**How it works:**
+- Vercel automatically calls this endpoint at the scheduled time
+- Adds `x-vercel-cron: 1` header for authentication
+- No manual configuration needed! ✨
+
 **Schedule Format:** `minute hour day month dayOfWeek`
 - `0 0 * * *` = Every day at 00:00 UTC (midnight UTC)
 
@@ -76,14 +131,40 @@ The `vercel.json` file configures the cron schedule:
 
 ## 🧪 Testing the Cron Job
 
-### Local Testing
+### Testing on Vercel (Production) ⭐ Easiest
+
+Once deployed, Vercel will automatically call the endpoint daily. To test immediately:
+
+**Option 1: Use Vercel Dashboard**
+1. Go to **Deployments** → Your latest deployment
+2. Find **Cron Jobs** section
+3. Click "Run now" next to `/api/cron/daily-stats`
+
+**Option 2: Use Vercel CLI**
+```bash
+vercel deploy  # Deploy first
+vercel cron trigger /api/cron/daily-stats
+```
+
+### Local Testing (Development)
 
 ```bash
-# Start your development server
+# 1. Set CRON_SECRET in .env.local
+CRON_SECRET="your-secret-here"
+
+# 2. Start your development server
 bun dev
 
-# In another terminal, test the cron endpoint
+# 3. Test the cron endpoint with authorization header
 curl -X GET http://localhost:3000/api/cron/daily-stats \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+```
+
+### Testing on Production URL (Manual Trigger)
+
+```bash
+# Only works if CRON_SECRET is set in Vercel environment variables
+curl -X GET https://your-domain.vercel.app/api/cron/daily-stats \
   -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
@@ -109,14 +190,6 @@ curl -X GET http://localhost:3000/api/cron/daily-stats \
   "duration": 45230,
   "timestamp": "2026-02-09T00:00:00.000Z"
 }
-```
-
-### Production Testing
-
-```bash
-# Test on Vercel (replace with your domain)
-curl -X GET https://your-domain.vercel.app/api/cron/daily-stats \
-  -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
 ---

@@ -200,15 +200,22 @@ score =
 
 The app uses **Vercel Cron Jobs** for automated stats collection:
 
+**🎉 On Vercel: Zero Configuration Required!**
+
+Simply deploy to Vercel and the cron job automatically runs daily at 00:00 UTC. Vercel handles authentication automatically via the `x-vercel-cron` header.
+
+**For Local Testing (Optional):**
+
 ```bash
-# 1. Generate a cron secret
+# 1. Generate a cron secret (for manual testing only)
 openssl rand -base64 32
 
-# 2. Add to .env.local (development)
+# 2. Add to .env.local
 CRON_SECRET="your-generated-secret"
 
-# 3. Add to Vercel environment variables (production)
-# Settings → Environment Variables → CRON_SECRET
+# 3. Test manually
+curl http://localhost:3000/api/cron/daily-stats \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
 **Schedule:** Every day at 00:00 UTC (configured in `vercel.json`)
@@ -220,12 +227,6 @@ The cron job automatically:
 - ✅ Calculates top gainers
 
 **📖 [Complete Cron Setup Guide →](./CRON_SETUP.md)**
-
-**Test locally:**
-```bash
-curl http://localhost:3000/api/cron/daily-stats \
-  -H "Authorization: Bearer YOUR_CRON_SECRET"
-```
 
 ---
 
@@ -295,19 +296,23 @@ NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# Optional: Only needed for local testing of cron endpoint
 CRON_SECRET="your-cron-secret-here"
 ```
 
 **Generate secrets:**
 ```bash
-# For NEXTAUTH_SECRET
+# For NEXTAUTH_SECRET (required)
 openssl rand -base64 32
 
-# For CRON_SECRET (used by automated stats cron)
+# For CRON_SECRET (optional - only if you want to test cron locally)
 openssl rand -base64 32
 ```
 
 **Get Google OAuth credentials:** See [AUTH_SETUP.md](AUTH_SETUP.md) for detailed instructions.
+
+> **Note:** On Vercel production, `CRON_SECRET` is not needed. The cron job authenticates automatically using Vercel's `x-vercel-cron` header.
 
 ### 5️⃣ Setup Database
 
