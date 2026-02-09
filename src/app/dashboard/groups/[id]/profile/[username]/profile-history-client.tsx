@@ -49,7 +49,7 @@ export default function ProfileHistoryClient({ group, profile }: ProfileHistoryC
   }
 
   function formatRank(rank: number): string {
-    if (rank >= 5000000) return 'N/A';
+    if (rank >= 5000000) return '~5000000';
     return rank.toLocaleString();
   }
 

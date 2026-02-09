@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Calendar, ChevronDown, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
@@ -40,6 +40,13 @@ interface Snapshot {
   }> | null;
 }
 
+interface GainerFromSnapshot {
+  username: string;
+  problemsGained: number;
+  currentSolved: number;
+  previousSolved: number;
+}
+
 interface LeaderboardHistoryClientProps {
   group: {
     id: number;
@@ -74,6 +81,47 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
     loadHistory();
   }, [group.id]);
 
+  // Calculate gainers by comparing with the previous snapshot
+  const snapshotGainers = useMemo(() => {
+    const gainersMap = new Map<number, GainerFromSnapshot[]>();
+    
+    // Snapshots are ordered desc by date, so previous snapshot is at index + 1
+    for (let i = 0; i < snapshots.length - 1; i++) {
+      const current = snapshots[i];
+      const previous = snapshots[i + 1];
+      
+      const currentData = current.snapshotData as LeaderboardEntry[];
+      const previousData = previous.snapshotData as LeaderboardEntry[];
+      
+      // Create a map of previous stats
+      const previousMap = new Map<string, number>();
+      for (const entry of previousData) {
+        previousMap.set(entry.username, entry.totalSolved);
+      }
+      
+      // Calculate gainers
+      const gainers: GainerFromSnapshot[] = [];
+      for (const entry of currentData) {
+        const prevSolved = previousMap.get(entry.username) ?? 0;
+        const gained = entry.totalSolved - prevSolved;
+        if (gained > 0) {
+          gainers.push({
+            username: entry.username,
+            problemsGained: gained,
+            currentSolved: entry.totalSolved,
+            previousSolved: prevSolved,
+          });
+        }
+      }
+      
+      // Sort by problems gained descending
+      gainers.sort((a, b) => b.problemsGained - a.problemsGained);
+      gainersMap.set(current.id, gainers);
+    }
+    
+    return gainersMap;
+  }, [snapshots]);
+
   function formatDate(date: Date): string {
     return new Date(date).toLocaleDateString('en-US', {
       weekday: 'short',
@@ -84,7 +132,7 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
   }
 
   function formatRank(rank: number): string {
-    if (rank >= 5000000) return 'N/A';
+    if (rank >= 5000000) return '~5000000';
     return rank.toLocaleString();
   }
 
@@ -221,22 +269,50 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
                       </TableBody>
                     </Table>
 
-                    {/* Top Gainers for this snapshot */}
-                    {snapshot.topGainers && snapshot.topGainers.length > 0 && (
-                      <div className="mt-6 pt-4 border-t border-neutral-800">
-                        <h4 className="text-white font-medium mb-3">🔥 Top Gainers</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {snapshot.topGainers.slice(0, 5).map((gainer) => (
-                            <span
-                              key={gainer.username}
-                              className="px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-green-400 text-sm"
-                            >
-                              {gainer.username}: +{gainer.problemsGained}
-                            </span>
-                          ))}
+                    {/* Zero Solvers */}
+                    {(() => {
+                      const zeroSolvers = data.filter(e => e.totalSolved === 0);
+                      if (zeroSolvers.length === 0) return null;
+                      return (
+                        <div className="mt-6 pt-4 border-t border-neutral-800">
+                          <h4 className="text-white font-medium mb-3">⚠️ Zero Problems Solved</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {zeroSolvers.map((member) => (
+                              <span
+                                key={member.username}
+                                className="px-3 py-1 bg-neutral-800 rounded text-neutral-400 text-sm font-mono"
+                              >
+                                {member.username}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
+
+                    {/* Top Gainers from previous snapshot */}
+                    {(() => {
+                      const gainers = snapshotGainers.get(snapshot.id);
+                      if (!gainers || gainers.length === 0) return null;
+                      return (
+                        <div className="mt-6 pt-4 border-t border-neutral-800">
+                          <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-green-500" />
+                            Top Gainers (vs Previous Snapshot)
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {gainers.slice(0, 10).map((gainer) => (
+                              <span
+                                key={gainer.username}
+                                className="px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-green-400 text-sm"
+                              >
+                                {gainer.username}: +{gainer.problemsGained} ({gainer.previousSolved} → {gainer.currentSolved})
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </CardContent>
                 )}
               </Card>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, Crown, Trash2, X } from 'lucide-react';
+import { Users, Crown, Trash2, X, Trophy } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { deleteGroup, removeMemberFromGroup } from '@/app/actions/groups';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from 'sonner';
 
 interface GroupCardProps {
@@ -157,7 +158,7 @@ export default function GroupCard({ group, userId }: GroupCardProps) {
           )}
         </CardContent>
 
-        <CardFooter className="relative">
+        <CardFooter className="relative flex flex-col gap-2">
           <Button
             variant="outline"
             className="w-full border-neutral-700 bg-transparent hover:border-neutral-600 hover:bg-neutral-800 text-neutral-300 hover:text-white transition-all"
@@ -165,6 +166,15 @@ export default function GroupCard({ group, userId }: GroupCardProps) {
           >
             View Details
           </Button>
+          <Link href={`/dashboard/groups/${group.id}/leaderboard`} className="w-full">
+            <Button
+              variant="outline"
+              className="w-full border-yellow-500/30 bg-yellow-500/5 hover:border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-500 hover:text-yellow-400 transition-all"
+            >
+              <Trophy className="h-4 w-4 mr-2" />
+              Leaderboard
+            </Button>
+          </Link>
         </CardFooter>
       </Card>
 

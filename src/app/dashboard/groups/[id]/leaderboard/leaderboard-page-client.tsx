@@ -125,7 +125,7 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
   }
 
   function formatRank(rank: number): string {
-    if (rank >= 5000000) return 'N/A';
+    if (rank >= 5000000) return '~5000000';
     return rank.toLocaleString();
   }
 
@@ -222,7 +222,6 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
                   <TableHead className="text-neutral-400 text-right">
                     <span className="text-red-500">H</span>
                   </TableHead>
-                  <TableHead className="text-neutral-400 text-right">Contest</TableHead>
                   <TableHead className="text-neutral-400 text-right">History</TableHead>
                 </TableRow>
               </TableHeader>
@@ -254,9 +253,6 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
                     <TableCell className="text-green-500 text-right">{entry.easySolved}</TableCell>
                     <TableCell className="text-yellow-500 text-right">{entry.mediumSolved}</TableCell>
                     <TableCell className="text-red-500 text-right">{entry.hardSolved}</TableCell>
-                    <TableCell className="text-neutral-300 text-right">
-                      {entry.contestRating || '-'}
-                    </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/dashboard/groups/${group.id}/profile/${entry.username}`}>
                         <Button
