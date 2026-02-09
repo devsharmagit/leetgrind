@@ -145,6 +145,99 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
     );
   }
 
+  // Check if group has minimum 5 members
+  const hasMinimumMembers = group.members.length >= 5;
+
+  if (!hasMinimumMembers) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push(`/dashboard/groups/${group.publicId}`)}
+            className="text-neutral-400 hover:text-white hover:bg-neutral-800"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+            <Trophy className="h-7 w-7 text-yellow-500" />
+            {group.name} Leaderboard
+          </h1>
+        </div>
+
+        {/* Minimum Members Required Card */}
+        <Card className="border-yellow-500/20 bg-yellow-500/5">
+          <CardContent className="py-12">
+            <div className="max-w-2xl mx-auto text-center space-y-6">
+              <div className="w-20 h-20 rounded-full bg-yellow-500/10 flex items-center justify-center mx-auto">
+                <Trophy className="h-10 w-10 text-yellow-500" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  Leaderboard Locked
+                </h2>
+                <p className="text-neutral-300 text-lg">
+                  Your group needs at least <strong className="text-yellow-500">5 members</strong> to access the leaderboard.
+                </p>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex-1 max-w-xs bg-neutral-800 rounded-full h-3 overflow-hidden">
+                    <div 
+                      className="bg-yellow-500 h-full transition-all duration-300"
+                      style={{ width: `${(group.members.length / 5) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-yellow-500 font-bold text-lg">
+                    {group.members.length} / 5
+                  </span>
+                </div>
+                <p className="text-yellow-400 font-medium">
+                  Add {5 - group.members.length} more {5 - group.members.length === 1 ? 'member' : 'members'} to unlock!
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <Button
+                  onClick={() => router.push(`/dashboard/groups/${group.publicId}`)}
+                  className="bg-white text-black hover:bg-neutral-200"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Group
+                </Button>
+              </div>
+
+              <div className="pt-6 border-t border-neutral-800">
+                <p className="text-neutral-400 text-sm mb-3">With 5+ members, you'll unlock:</p>
+                <div className="grid grid-cols-2 gap-3 text-sm text-neutral-300">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-yellow-500" />
+                    <span>Live Rankings</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <History className="h-4 w-4 text-yellow-500" />
+                    <span>Historical Data</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-yellow-500" />
+                    <span>Top Gainers</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-yellow-500" />
+                    <span>Performance Tracking</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const zeroSolvers = leaderboard.filter((m) => m.totalSolved === 0);
   const inactiveMembers = leaderboard.filter(
     (m) =>

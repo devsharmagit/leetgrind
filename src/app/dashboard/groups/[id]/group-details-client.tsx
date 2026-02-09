@@ -171,14 +171,25 @@ export default function GroupDetailsClient({ group, isOwner }: GroupDetailsClien
               </div>
               <div>
                 <h3 className="text-white font-semibold text-lg">Leaderboard</h3>
-                <p className="text-neutral-400 text-sm">View rankings, stats, and track progress over time</p>
+                <p className="text-neutral-400 text-sm">
+                  {group._count.members < 5 
+                    ? 'Add 5 members to unlock rankings and stats'
+                    : 'View rankings, stats, and track progress over time'
+                  }
+                </p>
               </div>
             </div>
-            <Link href={`/dashboard/groups/${group.publicId}/leaderboard`}>
-              <Button className="bg-white text-black hover:bg-neutral-200">
+            {group._count.members >= 5 ? (
+              <Link href={`/dashboard/groups/${group.publicId}/leaderboard`}>
+                <Button className="bg-white text-black hover:bg-neutral-200">
+                  View Leaderboard
+                </Button>
+              </Link>
+            ) : (
+              <Button disabled className="bg-neutral-700 text-neutral-500 cursor-not-allowed">
                 View Leaderboard
               </Button>
-            </Link>
+            )}
           </div>
         </CardContent>
       </Card>
