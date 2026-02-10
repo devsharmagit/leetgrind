@@ -78,6 +78,7 @@ model DailyStat {
 
   @@unique([leetcodeProfileId, date])
   @@index([date])
+  @@index([leetcodeProfileId])
 }
 
 model LeaderboardSnapshot {

@@ -226,17 +226,29 @@ export async function getGroupLeaderboard(groupId: number) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Get group with members and their latest stats
+    // Get group with members and their latest stats - optimized query
     const group = await prisma.group.findUnique({
       where: { id: groupId },
-      include: {
+      select: {
+        id: true,
         members: {
-          include: {
+          select: {
             leetcodeProfile: {
-              include: {
+              select: {
+                username: true,
                 stats: {
                   orderBy: { date: 'desc' },
                   take: 1,
+                  select: {
+                    date: true,
+                    ranking: true,
+                    totalSolved: true,
+                    easySolved: true,
+                    mediumSolved: true,
+                    hardSolved: true,
+                    contestRating: true,
+                    rankingPoints: true,
+                  },
                 },
               },
             },
@@ -303,21 +315,29 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
     const pastDate = new Date(today);
     pastDate.setDate(pastDate.getDate() - days);
 
-    // Get group with members
+    // Get group with members - optimized query with only necessary fields
     const group = await prisma.group.findUnique({
       where: { id: groupId },
-      include: {
+      select: {
+        id: true,
         members: {
-          include: {
+          select: {
             leetcodeProfile: {
-              include: {
+              select: {
+                username: true,
                 stats: {
                   where: {
                     date: {
                       gte: pastDate,
+                      lte: today,
                     },
                   },
                   orderBy: { date: 'asc' },
+                  select: {
+                    date: true,
+                    totalSolved: true,
+                    ranking: true,
+                  },
                 },
               },
             },
@@ -330,34 +350,69 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
       return { success: false, error: 'Group not found' };
     }
 
-    // Calculate gains for each member
+    // Calculate gains for each member with improved fallback logic
     const gainers = group.members.map(member => {
       const stats = member.leetcodeProfile.stats;
+      const username = member.leetcodeProfile.username;
       
-      if (stats.length < 2) {
+      // No stats available
+      if (stats.length === 0) {
         return {
-          username: member.leetcodeProfile.username,
+          username,
           problemsGained: 0,
           rankImproved: 0,
-          currentSolved: stats[0]?.totalSolved ?? 0,
-          currentRank: stats[0]?.ranking ?? 5000000,
+          currentSolved: 0,
+          currentRank: 5000000,
         };
       }
 
+      // Only one stat - no comparison possible
+      if (stats.length === 1) {
+        return {
+          username,
+          problemsGained: 0,
+          rankImproved: 0,
+          currentSolved: stats[0].totalSolved,
+          currentRank: stats[0].ranking,
+        };
+      }
+
+      // Multiple stats - calculate gains
       const oldest = stats[0];
       const latest = stats[stats.length - 1];
 
+      // Ensure we have valid data for calculations
+      const oldSolved = oldest?.totalSolved ?? 0;
+      const newSolved = latest?.totalSolved ?? 0;
+      const oldRank = oldest?.ranking ?? 5000000;
+      const newRank = latest?.ranking ?? 5000000;
+
+      // Calculate gains (ensure non-negative for problems)
+      const problemsGained = Math.max(0, newSolved - oldSolved);
+      
+      // Rank improvement: positive means rank number decreased (improved)
+      // Handle edge case where rank is default 5000000
+      let rankImproved = 0;
+      if (oldRank < 5000000 && newRank < 5000000) {
+        rankImproved = oldRank - newRank;
+      }
+
       return {
-        username: member.leetcodeProfile.username,
-        problemsGained: latest.totalSolved - oldest.totalSolved,
-        rankImproved: oldest.ranking - latest.ranking, // Positive = improved
-        currentSolved: latest.totalSolved,
-        currentRank: latest.ranking,
+        username,
+        problemsGained,
+        rankImproved,
+        currentSolved: newSolved,
+        currentRank: newRank,
       };
     });
 
-    // Sort by problems gained (descending)
-    gainers.sort((a, b) => b.problemsGained - a.problemsGained);
+    // Sort by problems gained (descending), then by rank improvement
+    gainers.sort((a, b) => {
+      if (b.problemsGained !== a.problemsGained) {
+        return b.problemsGained - a.problemsGained;
+      }
+      return b.rankImproved - a.rankImproved;
+    });
 
     // Filter to only those who gained
     const activeGainers = gainers.filter(g => g.problemsGained > 0);
