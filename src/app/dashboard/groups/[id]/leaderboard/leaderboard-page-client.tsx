@@ -75,6 +75,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
   const router = useRouter();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [gainers, setGainers] = useState<GainerEntry[]>([]);
+  const [lastSnapshotDate, setLastSnapshotDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -88,6 +89,9 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
 
       if (leaderboardResult.success && leaderboardResult.data) {
         setLeaderboard(leaderboardResult.data);
+        if (leaderboardResult.lastSnapshotDate) {
+          setLastSnapshotDate(leaderboardResult.lastSnapshotDate);
+        }
       }
 
       if (gainersResult.success && gainersResult.data) {
@@ -139,8 +143,34 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Spinner className="h-8 w-8" />
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-neutral-800 rounded animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-8 w-64 bg-neutral-800 rounded animate-pulse" />
+              <div className="h-4 w-32 bg-neutral-800 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="h-10 w-32 bg-neutral-800 rounded animate-pulse" />
+            <div className="h-10 w-32 bg-neutral-800 rounded animate-pulse" />
+          </div>
+        </div>
+        {/* Table Skeleton */}
+        <Card className="border-neutral-800 bg-neutral-900">
+          <CardHeader>
+            <div className="h-6 w-48 bg-neutral-800 rounded animate-pulse" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-12 bg-neutral-800 rounded animate-pulse" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -298,12 +328,23 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
       {/* Main Leaderboard */}
       <Card className="border-neutral-800 bg-neutral-900">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Rankings by Score
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="text-white flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Rankings by Score
+            </CardTitle>
+            {lastSnapshotDate && (
+              <p className="text-xs text-neutral-500">
+                Last snapshot: {new Date(lastSnapshotDate).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </p>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           {leaderboard.length === 0 ? (
             <p className="text-neutral-400 text-center py-4">
               {isOwner 
@@ -311,68 +352,76 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                 : 'No stats available yet. Ask the group owner to refresh stats.'}
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-neutral-800 hover:bg-transparent">
-                  <TableHead className="text-neutral-400">#</TableHead>
-                  <TableHead className="text-neutral-400">Username</TableHead>
-                  <TableHead className="text-neutral-400 text-right">LeetCode Rank</TableHead>
-                  <TableHead className="text-neutral-400 text-right">Total</TableHead>
-                  <TableHead className="text-neutral-400 text-right">
-                    <span className="text-green-500">E</span>
-                  </TableHead>
-                  <TableHead className="text-neutral-400 text-right">
-                    <span className="text-yellow-500">M</span>
-                  </TableHead>
-                  <TableHead className="text-neutral-400 text-right">
-                    <span className="text-red-500">H</span>
-                  </TableHead>
-                  <TableHead className="text-neutral-400 text-right">History</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {leaderboard.map((entry, index) => (
-                  <TableRow key={entry.username} className="border-neutral-800 hover:bg-neutral-800/50">
-                    <TableCell className="text-white font-medium">
-                      {index === 0 && '🥇'}
-                      {index === 1 && '🥈'}
-                      {index === 2 && '🥉'}
-                      {index > 2 && index + 1}
-                    </TableCell>
-                    <TableCell className="text-white font-mono">
-                      <a
-                        href={`https://leetcode.com/${entry.username}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                      >
-                        {entry.username}
-                      </a>
-                    </TableCell>
-                    <TableCell className="text-neutral-300 text-right">
-                      {formatRank(entry.ranking)}
-                    </TableCell>
-                    <TableCell className="text-white font-semibold text-right">
-                      {entry.totalSolved}
-                    </TableCell>
-                    <TableCell className="text-green-500 text-right">{entry.easySolved}</TableCell>
-                    <TableCell className="text-yellow-500 text-right">{entry.mediumSolved}</TableCell>
-                    <TableCell className="text-red-500 text-right">{entry.hardSolved}</TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/dashboard/groups/${group.publicId}/profile/${entry.username}`}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-neutral-400 hover:text-white"
-                        >
-                          <History className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </TableCell>
+            <div className="min-w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-neutral-800 hover:bg-transparent">
+                    <TableHead className="text-neutral-400 w-12">#</TableHead>
+                    <TableHead className="text-neutral-400">Username</TableHead>
+                    <TableHead className="text-neutral-400 text-right hidden md:table-cell">LeetCode Rank</TableHead>
+                    <TableHead className="text-neutral-400 text-right">Total</TableHead>
+                    <TableHead className="text-neutral-400 text-right hidden sm:table-cell">
+                      <span className="text-green-500">E</span>
+                    </TableHead>
+                    <TableHead className="text-neutral-400 text-right hidden sm:table-cell">
+                      <span className="text-yellow-500">M</span>
+                    </TableHead>
+                    <TableHead className="text-neutral-400 text-right hidden sm:table-cell">
+                      <span className="text-red-500">H</span>
+                    </TableHead>
+                    <TableHead className="text-neutral-400 text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {leaderboard.map((entry, index) => {
+                    const rankBgColor = index === 0 ? 'bg-yellow-500/10' : index === 1 ? 'bg-gray-400/10' : index === 2 ? 'bg-orange-600/10' : '';
+                    return (
+                      <TableRow 
+                        key={entry.username} 
+                        className={`border-neutral-800 hover:bg-neutral-800/50 ${rankBgColor}`}
+                      >
+                        <TableCell className="text-white font-medium">
+                          {index === 0 && '🥇'}
+                          {index === 1 && '🥈'}
+                          {index === 2 && '🥉'}
+                          {index > 2 && index + 1}
+                        </TableCell>
+                        <TableCell className="text-white font-mono">
+                          <a
+                            href={`https://leetcode.com/${entry.username}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline truncate block max-w-[150px] sm:max-w-none"
+                          >
+                            {entry.username}
+                          </a>
+                        </TableCell>
+                        <TableCell className="text-neutral-300 text-right hidden md:table-cell">
+                          {formatRank(entry.ranking)}
+                        </TableCell>
+                        <TableCell className="text-white font-semibold text-right">
+                          {entry.totalSolved}
+                        </TableCell>
+                        <TableCell className="text-green-500 text-right hidden sm:table-cell">{entry.easySolved}</TableCell>
+                        <TableCell className="text-yellow-500 text-right hidden sm:table-cell">{entry.mediumSolved}</TableCell>
+                        <TableCell className="text-red-500 text-right hidden sm:table-cell">{entry.hardSolved}</TableCell>
+                        <TableCell className="text-right">
+                          <Link href={`/dashboard/groups/${group.publicId}/profile/${entry.username}`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-neutral-400 hover:text-white h-8 w-8 p-0"
+                            >
+                              <History className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

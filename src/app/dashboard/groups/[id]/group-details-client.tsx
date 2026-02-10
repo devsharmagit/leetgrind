@@ -221,23 +221,30 @@ export default function GroupDetailsClient({ group, isOwner }: GroupDetailsClien
                 <div className="divide-y divide-neutral-800 max-h-96 overflow-y-auto">
                   {group.members.map((member) => {
                     const latestStats = member.leetcodeProfile.stats[0];
+                    const lastUpdated = latestStats?.date 
+                      ? new Date(latestStats.date).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric' 
+                        })
+                      : 'Never';
                     return (
                       <div
                         key={member.id}
                         className="flex items-center justify-between p-4 hover:bg-neutral-800/50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center shrink-0">
                             <span className="text-white font-medium">
                               {member.leetcodeProfile.username[0].toUpperCase()}
                             </span>
                           </div>
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <a
                               href={`https://leetcode.com/u/${member.leetcodeProfile.username}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-medium text-white hover:underline"
+                              className="font-medium text-white hover:underline truncate block"
                             >
                               {member.leetcodeProfile.username}
                             </a>
@@ -246,6 +253,9 @@ export default function GroupDetailsClient({ group, isOwner }: GroupDetailsClien
                                 {latestStats.totalSolved} solved • {latestStats.rankingPoints} pts
                               </p>
                             )}
+                            <p className="text-xs text-neutral-600 mt-0.5">
+                              Updated: {lastUpdated}
+                            </p>
                           </div>
                         </div>
                         {isOwner && (

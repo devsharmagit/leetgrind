@@ -254,6 +254,13 @@ export async function getGroupLeaderboard(groupId: number) {
             },
           },
         },
+        leaderboardSnapshots: {
+          orderBy: { date: 'desc' },
+          take: 1,
+          select: {
+            date: true,
+          },
+        },
       },
     });
 
@@ -294,7 +301,11 @@ export async function getGroupLeaderboard(groupId: number) {
       return a.username.localeCompare(b.username);
     });
 
-    return { success: true, data: leaderboard };
+    return { 
+      success: true, 
+      data: leaderboard,
+      lastSnapshotDate: group.leaderboardSnapshots[0]?.date ?? null,
+    };
   } catch (error) {
     console.error('Error getting leaderboard:', error);
     return { success: false, error: 'Failed to get leaderboard' };

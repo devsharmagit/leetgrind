@@ -90,7 +90,7 @@ async function PublicGroupContent({ publicId }: { publicId: string }) {
                   <div className="grid gap-2">
                     {group.members.map((member) => (
                       <div
-                        key={member.id}
+                        key={member.leetcodeProfile.username}
                         className="p-3 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 transition-colors"
                       >
                         <div className="flex items-center justify-between">

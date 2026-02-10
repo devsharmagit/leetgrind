@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, ChevronDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Calendar, ChevronDown, TrendingUp, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Table,
@@ -16,6 +16,11 @@ import {
 } from '@/components/ui/table';
 import { getLeaderboardHistory } from '@/app/actions/leaderboard';
 import { toast } from 'sonner';
+import {
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 
 interface LeaderboardEntry {
   username: string;
@@ -125,6 +130,48 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
     
     return gainersMap;
   }, [snapshots]);
+
+  // Prepare chart data for progress over time (last 30 days)
+  const chartData = useMemo(() => {
+    if (snapshots.length === 0) return [];
+    
+    // Get unique usernames from all snapshots
+    const allUsernames = new Set<string>();
+    snapshots.forEach(snapshot => {
+      (snapshot.snapshotData as LeaderboardEntry[]).forEach(entry => {
+        allUsernames.add(entry.username);
+      });
+    });
+
+    // Get top 5 users by most recent total solved
+    const recentSnapshot = snapshots[0].snapshotData as LeaderboardEntry[];
+    const topUsers = recentSnapshot
+      .sort((a, b) => b.totalSolved - a.totalSolved)
+      .slice(0, 5)
+      .map(e => e.username);
+
+    // Reverse snapshots for chronological order
+    const chronologicalSnapshots = [...snapshots].reverse().slice(-30);
+
+    return chronologicalSnapshots.map(snapshot => {
+      const data = snapshot.snapshotData as LeaderboardEntry[];
+      const dataMap = new Map(data.map(e => [e.username, e]));
+      
+      const point: Record<string, string | number> = {
+        date: new Date(snapshot.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      };
+      
+      topUsers.forEach(username => {
+        const entry = dataMap.get(username);
+        point[username] = entry?.totalSolved ?? 0;
+      });
+      
+      return point;
+    });
+  }, [snapshots]);
+
+  // Get distinct colors for users
+  const userColors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   function formatDate(date: Date): string {
     return new Date(date).toLocaleDateString('en-US', {
@@ -283,7 +330,160 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <>
+          {/* Progress Chart - Top 5 Users */}
+          {chartData.length > 1 && (
+            <Card className="border-neutral-800 bg-neutral-900">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                  Progress Trend (Top 5 Users - Last 30 Days)
+                </CardTitle>
+                <CardDescription className="text-neutral-500">
+                  Track solved problems over time
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#404040" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#737373"
+                        tick={{ fill: '#737373', fontSize: 12 }}
+                      />
+                      <YAxis 
+                        stroke="#737373"
+                        tick={{ fill: '#737373', fontSize: 12 }}
+                      />
+                      <ChartTooltip 
+                        content={<ChartTooltipContent />}
+                        cursor={{ stroke: '#525252' }}
+                      />
+                      {snapshots.length > 0 && 
+                        (snapshots[0].snapshotData as LeaderboardEntry[])
+                          .sort((a, b) => b.totalSolved - a.totalSolved)
+                          .slice(0, 5)
+                          .map((entry, index) => (
+                            <Line
+                              key={entry.username}
+                              type="monotone"
+                              dataKey={entry.username}
+                              stroke={userColors[index % userColors.length]}
+                              strokeWidth={2}
+                              dot={{ fill: userColors[index % userColors.length], r: 3 }}
+                              activeDot={{ r: 5 }}
+                            />
+                          ))
+                      }
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Legend */}
+                <div className="flex flex-wrap gap-4 mt-4 justify-center">
+                  {snapshots.length > 0 && 
+                    (snapshots[0].snapshotData as LeaderboardEntry[])
+                      .sort((a, b) => b.totalSolved - a.totalSolved)
+                      .slice(0, 5)
+                      .map((entry, index) => (
+                        <div key={entry.username} className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: userColors[index % userColors.length] }}
+                          />
+                          <span className="text-sm text-neutral-300 font-mono">
+                            {entry.username}
+                          </span>
+                        </div>
+                      ))
+                  }
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Rank Movement Analysis */}
+          {snapshots.length >= 2 && (
+            <Card className="border-neutral-800 bg-neutral-900">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Rank Movement (Last 7 Days)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const recent = snapshots[0].snapshotData as LeaderboardEntry[];
+                  const previous = snapshots.find((s, i) => {
+                    const daysDiff = Math.abs(
+                      (new Date(snapshots[0].date).getTime() - new Date(s.date).getTime()) / 
+                      (1000 * 60 * 60 * 24)
+                    );
+                    return i > 0 && daysDiff >= 6 && daysDiff <= 8;
+                  })?.snapshotData as LeaderboardEntry[] | undefined;
+
+                  if (!previous) {
+                    return <p className="text-neutral-500 text-sm">Need at least 7 days of data to show rank movement</p>;
+                  }
+
+                  // Create rank maps
+                  const previousRanks = new Map(previous.map((e, i) => [e.username, i + 1]));
+
+                  // Calculate movements
+                  const movements = recent.map((entry, index) => {
+                    const currentRank = index + 1;
+                    const prevRank = previousRanks.get(entry.username);
+                    const movement = prevRank ? prevRank - currentRank : null;
+                    return { ...entry, currentRank, prevRank, movement };
+                  }).filter(e => e.movement !== null).sort((a, b) => (b.movement! - a.movement!));
+
+                  const movers = movements.slice(0, 10);
+
+                  return (
+                    <div className="grid gap-2">
+                      {movers.map((entry) => (
+                        <div 
+                          key={entry.username}
+                          className="flex items-center justify-between p-3 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="text-white font-semibold">#{entry.currentRank}</div>
+                            <span className="text-white font-mono">{entry.username}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-neutral-400 text-sm">
+                              {entry.totalSolved} solved
+                            </span>
+                            {entry.movement! > 0 && (
+                              <span className="text-green-500 font-medium flex items-center gap-1">
+                                ↑ {entry.movement}
+                              </span>
+                            )}
+                            {entry.movement! < 0 && (
+                              <span className="text-red-500 font-medium flex items-center gap-1">
+                                ↓ {Math.abs(entry.movement!)}
+                              </span>
+                            )}
+                            {entry.movement === 0 && (
+                              <span className="text-neutral-500 font-medium">→ 0</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Historical Snapshots */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-blue-500" />
+              Historical Snapshots
+            </h2>
           {snapshots.map((snapshot) => {
             const dateStr = new Date(snapshot.date).toISOString().split('T')[0];
             const isExpanded = expandedDates.has(dateStr);
@@ -415,7 +615,8 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
               </Card>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

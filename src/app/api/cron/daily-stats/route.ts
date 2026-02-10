@@ -27,21 +27,30 @@ async function processBatch<T, R>(
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
   
+  // Validate environment variables
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error('[CRON] CRON_SECRET environment variable is not set');
+    return NextResponse.json(
+      { error: 'Server configuration error' },
+      { status: 500 }
+    );
+  }
+  
   // Verify request is from Vercel Cron or authorized source
   const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
   
   // Check if request is from Vercel Cron (production)
   const isVercelCron = request.headers.get('x-vercel-cron') === '1';
   
   // Check if request has valid authorization header (for manual testing)
-  const hasValidAuth = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const hasValidAuth = authHeader === `Bearer ${cronSecret}`;
   
   if (!isVercelCron && !hasValidAuth) {
     console.warn('[CRON] Unauthorized access attempt', {
       hasVercelCronHeader: !!request.headers.get('x-vercel-cron'),
       hasAuthHeader: !!authHeader,
-      hasCronSecret: !!cronSecret,
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
     return NextResponse.json(
       { error: 'Unauthorized' },
@@ -99,6 +108,16 @@ export async function GET(request: NextRequest) {
       profilesToUpdate,
       async (profile) => {
         try {
+          // Validate username before fetching
+          if (!profile.username || profile.username.length === 0) {
+            console.warn(`[CRON] Skipping invalid username for profile ${profile.id}`);
+            return {
+              username: profile.username || 'unknown',
+              status: 'failed' as const,
+              error: 'Invalid username',
+            };
+          }
+          
           const stats = await fetchLeetCodeStats(profile.username);
           
           if (!stats) {

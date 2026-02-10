@@ -10,20 +10,24 @@ export interface AddMemberInput {
 }
 
 // Validate LeetCode username format
-// LeetCode usernames: 1-15 chars, alphanumeric + underscore/hyphen, no special chars
+// LeetCode usernames: 3-30 chars, letters, numbers, underscore only
 function validateUsernameFormat(username: string): { valid: boolean; error?: string } {
   if (!username || username.length === 0) {
     return { valid: false, error: 'Username cannot be empty' };
   }
   
-  if (username.length > 15) {
-    return { valid: false, error: 'Username too long (max 15 characters)' };
+  if (username.length < 3) {
+    return { valid: false, error: 'Username too short (min 3 characters)' };
   }
   
-  // LeetCode usernames: letters, numbers, underscore, hyphen only
-  const validPattern = /^[a-zA-Z0-9_-]+$/;
+  if (username.length > 30) {
+    return { valid: false, error: 'Username too long (max 30 characters)' };
+  }
+  
+  // LeetCode usernames: letters, numbers, underscore only (no hyphens or special chars)
+  const validPattern = /^[a-zA-Z0-9_]+$/;
   if (!validPattern.test(username)) {
-    return { valid: false, error: 'Username contains invalid characters (only letters, numbers, _, - allowed)' };
+    return { valid: false, error: 'Username contains invalid characters (only letters, numbers, _ allowed)' };
   }
   
   return { valid: true };
@@ -394,7 +398,7 @@ export async function getGroupDetailsByPublicId(publicId: string) {
       return { success: false, error: 'This group is private' };
     }
 
-    // Return public-safe data (internal id removed from response)
+    // Return public-safe data (internal DB IDs removed)
     return { 
       success: true, 
       data: {
@@ -404,7 +408,13 @@ export async function getGroupDetailsByPublicId(publicId: string) {
         owner: {
           name: group.owner.name,
         },
-        members: group.members,
+        members: group.members.map(member => ({
+          // Remove internal DB IDs, only expose usernames
+          leetcodeProfile: {
+            username: member.leetcodeProfile.username,
+            stats: member.leetcodeProfile.stats,
+          },
+        })),
         _count: group._count,
         createdAt: group.createdAt,
       } 
@@ -453,6 +463,144 @@ export async function validateLeetCodeUsername(username: string): Promise<{ vali
 }
 
 // Add multiple members to a group with validation
+// Single member add for progressive bulk operations
+export async function addSingleMemberToGroup(
+  groupId: number,
+  rawUsername: string,
+  existingUsernames: string[]
+) {
+  const session = await auth();
+  
+  if (!session?.user?.email) {
+    return { 
+      success: false, 
+      username: rawUsername,
+      status: 'error' as const,
+      message: 'Unauthorized'
+    };
+  }
+
+  try {
+    const username = normalizeUsername(rawUsername);
+    
+    if (!username) {
+      return {
+        success: false,
+        username: rawUsername,
+        status: 'error' as const,
+        message: 'Invalid username'
+      };
+    }
+
+    // Validate username format
+    const formatValidation = validateUsernameFormat(username);
+    if (!formatValidation.valid) {
+      return {
+        success: false,
+        username: rawUsername,
+        status: 'error' as const,
+        message: formatValidation.error || 'Invalid format'
+      };
+    }
+
+    // Check if already in group
+    if (existingUsernames.map(u => u.toLowerCase()).includes(username)) {
+      return {
+        success: true,
+        username,
+        status: 'skipped' as const,
+        message: 'Already in group'
+      };
+    }
+
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return {
+        success: false,
+        username,
+        status: 'error' as const,
+        message: 'User not found'
+      };
+    }
+
+    // Check if user owns the group
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+    });
+
+    if (!group) {
+      return {
+        success: false,
+        username,
+        status: 'error' as const,
+        message: 'Group not found'
+      };
+    }
+
+    if (group.ownerId !== user.id) {
+      return {
+        success: false,
+        username,
+        status: 'error' as const,
+        message: 'Unauthorized'
+      };
+    }
+
+    // Validate LeetCode username exists
+    const validation = await validateLeetCodeUsername(username);
+    
+    if (!validation.valid) {
+      return {
+        success: false,
+        username,
+        status: 'error' as const,
+        message: validation.error || 'Not found on LeetCode'
+      };
+    }
+
+    // Find or create the LeetCode profile
+    let leetcodeProfile = await prisma.leetcodeProfile.findUnique({
+      where: { username },
+    });
+
+    if (!leetcodeProfile) {
+      leetcodeProfile = await prisma.leetcodeProfile.create({
+        data: { username },
+      });
+    }
+
+    // Add member to group
+    await prisma.groupMember.create({
+      data: {
+        groupId,
+        leetcodeProfileId: leetcodeProfile.id,
+      },
+    });
+
+    revalidatePath(`/dashboard/groups/${groupId}`);
+    revalidatePath('/dashboard');
+    
+    return {
+      success: true,
+      username,
+      status: 'success' as const,
+      message: 'Added successfully'
+    };
+  } catch (error) {
+    console.error('Error adding member:', error);
+    return {
+      success: false,
+      username: rawUsername,
+      status: 'error' as const,
+      message: 'Failed to add'
+    };
+  }
+}
+
 export async function addMembersToGroup(groupId: number, usernames: string[]) {
   // Check if user is logged in
   const session = await auth();

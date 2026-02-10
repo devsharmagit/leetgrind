@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserPlus, CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { addMembersToGroup } from '@/app/actions/groups';
+import { addSingleMemberToGroup } from '@/app/actions/groups';
 import { toast } from 'sonner';
 
 interface BulkAddMembersProps {
@@ -16,16 +16,19 @@ interface BulkAddMembersProps {
 
 interface AddResult {
   username: string;
-  status: 'success' | 'error' | 'skipped';
+  status: 'success' | 'error' | 'skipped' | 'processing';
   message: string;
 }
 
 export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMembersProps) {
   const router = useRouter();
   const [input, setInput] = useState('');
-  const [isPending, startTransition] = useTransition();
+  const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<AddResult[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState('');
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const parseUsernames = (text: string): string[] => {
     // Remove single/double quotes, brackets, and split by comma, newline, or space
@@ -37,7 +40,7 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
       .filter((u, i, arr) => arr.indexOf(u) === i); // Remove duplicates
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const usernames = parseUsernames(input);
 
     if (usernames.length === 0) {
@@ -52,43 +55,74 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
 
     setShowResults(true);
     setResults([]);
+    setIsProcessing(true);
+    setProgress({ current: 0, total: usernames.length });
+    abortControllerRef.current = new AbortController();
 
-    startTransition(async () => {
-      const response = await addMembersToGroup(groupId, usernames);
+    const resultsArray: AddResult[] = [];
+    const addedUsernames = [...existingUsernames];
 
-      if (!response.success) {
-        toast.error(response.error || 'Failed to add members');
-        return;
+    for (let i = 0; i < usernames.length; i++) {
+      if (abortControllerRef.current.signal.aborted) {
+        break;
       }
 
-      if (response.results) {
-        setResults(response.results);
+      const username = usernames[i];
+      setCurrentUsername(username);
+      setProgress({ current: i + 1, total: usernames.length });
 
-        const successCount = response.results.filter((r) => r.status === 'success').length;
-        const skipCount = response.results.filter((r) => r.status === 'skipped').length;
-        const errorCount = response.results.filter((r) => r.status === 'error').length;
+      // Add processing state
+      const processingResult: AddResult = {
+        username,
+        status: 'processing',
+        message: 'Processing...'
+      };
+      resultsArray.push(processingResult);
+      setResults([...resultsArray]);
 
-        if (successCount > 0) {
-          toast.success(`Added ${successCount} member${successCount > 1 ? 's' : ''}`);
-        }
-        if (skipCount > 0) {
-          toast.info(`${skipCount} already in group`);
-        }
-        if (errorCount > 0) {
-          toast.error(`${errorCount} failed validation`);
-        }
+      // Call server action for single member
+      const response = await addSingleMemberToGroup(groupId, username, addedUsernames);
 
-        // Always clear input after processing
-        setInput('');
+      // Update the result
+      resultsArray[i] = {
+        username: response.username,
+        status: response.status,
+        message: response.message
+      };
+      setResults([...resultsArray]);
 
-        router.refresh();
+      // If successfully added, update the addedUsernames list
+      if (response.status === 'success') {
+        addedUsernames.push(response.username.toLowerCase());
       }
-    });
+    }
+
+    setIsProcessing(false);
+    setCurrentUsername('');
+
+    // Show summary toast
+    const successCount = resultsArray.filter((r) => r.status === 'success').length;
+    const skipCount = resultsArray.filter((r) => r.status === 'skipped').length;
+    const errorCount = resultsArray.filter((r) => r.status === 'error').length;
+
+    if (successCount > 0) {
+      toast.success(`Added ${successCount} member${successCount > 1 ? 's' : ''}`);
+    }
+    if (skipCount > 0) {
+      toast.info(`${skipCount} already in group`);
+    }
+    if (errorCount > 0) {
+      toast.error(`${errorCount} failed validation`);
+    }
+
+    // Clear input after processing
+    setInput('');
+    router.refresh();
   };
 
   const usernameCount = parseUsernames(input).length;
 
-  const getStatusIcon = (status: 'success' | 'error' | 'skipped') => {
+  const getStatusIcon = (status: 'success' | 'error' | 'skipped' | 'processing') => {
     switch (status) {
       case 'success':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
@@ -96,10 +130,12 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'skipped':
         return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      case 'processing':
+        return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
     }
   };
 
-  const getStatusColor = (status: 'success' | 'error' | 'skipped') => {
+  const getStatusColor = (status: 'success' | 'error' | 'skipped' | 'processing') => {
     switch (status) {
       case 'success':
         return 'text-green-400 bg-green-500/10 border-green-500/20';
@@ -107,6 +143,8 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
         return 'text-red-400 bg-red-500/10 border-red-500/20';
       case 'skipped':
         return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+      case 'processing':
+        return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
     }
   };
 
@@ -120,7 +158,7 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
         <CardDescription className="text-neutral-500">
           Enter LeetCode usernames (one per line, comma-separated, or space-separated)
           <br />
-          <span className="text-xs">Valid: letters, numbers, underscore, hyphen (max 15 chars each)</span>
+          <span className="text-xs">Valid: letters, numbers, underscore (3-30 chars each)</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4 space-y-4">
@@ -133,7 +171,7 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
             }}
             placeholder="username1&#10;username2&#10;username3&#10;&#10;or: user1, user2, user3"
             className="min-h-[200px] bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 resize-none font-mono text-sm focus:border-neutral-600 focus:ring-neutral-600"
-            disabled={isPending}
+            disabled={isProcessing}
           />
           <div className="flex items-center justify-between text-xs">
             <span className="text-neutral-500">
@@ -143,15 +181,33 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
           </div>
         </div>
 
+        {/* Progress indicator */}
+        {isProcessing && (
+          <div className="space-y-2 p-3 rounded bg-blue-500/10 border border-blue-500/20">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-blue-400">Processing...</span>
+              <span className="text-blue-300 font-mono">
+                {progress.current}/{progress.total}
+              </span>
+            </div>
+            {currentUsername && (
+              <div className="flex items-center gap-2 text-xs text-blue-300">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span className="font-mono">{currentUsername}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         <Button
           onClick={handleSubmit}
-          disabled={isPending || usernameCount === 0}
+          disabled={isProcessing || usernameCount === 0}
           className="w-full bg-white text-black hover:bg-neutral-200 disabled:bg-neutral-700 disabled:text-neutral-500"
         >
-          {isPending ? (
+          {isProcessing ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Validating & Adding...
+              Adding {progress.current}/{progress.total}...
             </>
           ) : (
             <>
