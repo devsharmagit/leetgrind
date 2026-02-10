@@ -71,7 +71,7 @@ interface LeaderboardPageClientProps {
   isOwner: boolean;
 }
 
-export default function LeaderboardPageClient({ group }: LeaderboardPageClientProps) {
+export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPageClientProps) {
   const router = useRouter();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [gainers, setGainers] = useState<GainerEntry[]>([]);
@@ -276,20 +276,22 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
               View History
             </Button>
           </Link>
-          <Button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="bg-white text-black hover:bg-neutral-200"
-          >
-            {refreshing ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Refreshing...
-              </>
-            ) : (
-              '🔄 Refresh Stats'
-            )}
-          </Button>
+          {isOwner && (
+            <Button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="bg-white text-black hover:bg-neutral-200"
+            >
+              {refreshing ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Refreshing...
+                </>
+              ) : (
+                '🔄 Refresh Stats'
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -298,13 +300,15 @@ export default function LeaderboardPageClient({ group }: LeaderboardPageClientPr
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Rankings by LeetCode Rank
+            Rankings by Score
           </CardTitle>
         </CardHeader>
         <CardContent>
           {leaderboard.length === 0 ? (
             <p className="text-neutral-400 text-center py-4">
-              No stats yet. Click &quot;Refresh Stats&quot; to fetch data.
+              {isOwner 
+                ? 'No stats yet. Click "Refresh Stats" to fetch data.' 
+                : 'No stats available yet. Ask the group owner to refresh stats.'}
             </p>
           ) : (
             <Table>

@@ -266,8 +266,21 @@ export async function getGroupLeaderboard(groupId: number) {
       };
     });
 
-    // Sort by ranking (lower is better)
-    leaderboard.sort((a, b) => a.ranking - b.ranking);
+    // Sort by rankingPoints (descending - higher is better)
+    // Tie-breaker 1: ranking (ascending - lower is better)
+    // Tie-breaker 2: username (alphabetical for stability)
+    leaderboard.sort((a, b) => {
+      // Primary: rankingPoints (descending)
+      if (b.rankingPoints !== a.rankingPoints) {
+        return b.rankingPoints - a.rankingPoints;
+      }
+      // Tie-breaker 1: ranking (ascending)
+      if (a.ranking !== b.ranking) {
+        return a.ranking - b.ranking;
+      }
+      // Tie-breaker 2: username (alphabetical)
+      return a.username.localeCompare(b.username);
+    });
 
     return { success: true, data: leaderboard };
   } catch (error) {

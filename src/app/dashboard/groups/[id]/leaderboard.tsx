@@ -41,9 +41,10 @@ interface GainerEntry {
 
 interface LeaderboardProps {
   groupId: number;
+  isOwner: boolean;
 }
 
-export function Leaderboard({ groupId }: LeaderboardProps) {
+export function Leaderboard({ groupId, isOwner }: LeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [gainers, setGainers] = useState<GainerEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,32 +120,36 @@ export function Leaderboard({ groupId }: LeaderboardProps) {
       {/* Header with Refresh Button */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Leaderboard</h2>
-        <Button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          variant="outline"
-          className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
-        >
-          {refreshing ? (
-            <>
-              <Spinner className="mr-2 h-4 w-4" />
-              Refreshing...
-            </>
-          ) : (
-            "🔄 Refresh Stats"
-          )}
-        </Button>
+        {isOwner && (
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outline"
+            className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+          >
+            {refreshing ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Refreshing...
+              </>
+            ) : (
+              "🔄 Refresh Stats"
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Main Leaderboard */}
       <Card className="border-neutral-800 bg-neutral-900">
         <CardHeader>
-          <CardTitle className="text-white">Rankings by LeetCode Rank</CardTitle>
+          <CardTitle className="text-white">Rankings by Score</CardTitle>
         </CardHeader>
         <CardContent>
           {leaderboard.length === 0 ? (
             <p className="text-neutral-400 text-center py-4">
-              No stats yet. Click &quot;Refresh Stats&quot; to fetch data.
+              {isOwner 
+                ? 'No stats yet. Click "Refresh Stats" to fetch data.' 
+                : 'No stats available yet. Ask the group owner to refresh stats.'}
             </p>
           ) : (
             <Table>
