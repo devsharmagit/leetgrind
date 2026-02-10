@@ -8,6 +8,7 @@ import GroupCard from './group-card';
 
 interface Group {
   id: number;
+  publicId: string;
   name: string;
   ownerId: number;
   owner: {
