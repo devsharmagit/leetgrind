@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserPlus, CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { addSingleMemberToGroup } from '@/app/actions/groups';
+import { addMembersToGroup } from '@/app/actions/groups';
 import { toast } from 'sonner';
 
 interface BulkAddMembersProps {
@@ -26,9 +26,6 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<AddResult[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [currentUsername, setCurrentUsername] = useState('');
-  const [progress, setProgress] = useState({ current: 0, total: 0 });
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   const parseUsernames = (text: string): string[] => {
     // Remove single/double quotes, brackets, and split by comma, newline, or space
@@ -48,74 +45,42 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
       return;
     }
 
-    if (usernames.length > 200) {
-      toast.error('Maximum 200 usernames allowed at once');
+    if (usernames.length > 50) {
+      toast.error('Maximum 50 usernames allowed at once');
       return;
     }
 
     setShowResults(true);
     setResults([]);
     setIsProcessing(true);
-    setProgress({ current: 0, total: usernames.length });
-    abortControllerRef.current = new AbortController();
 
-    const resultsArray: AddResult[] = [];
-    const addedUsernames = [...existingUsernames];
-
-    for (let i = 0; i < usernames.length; i++) {
-      if (abortControllerRef.current.signal.aborted) {
-        break;
-      }
-
-      const username = usernames[i];
-      setCurrentUsername(username);
-      setProgress({ current: i + 1, total: usernames.length });
-
-      // Add processing state
-      const processingResult: AddResult = {
-        username,
-        status: 'processing',
-        message: 'Processing...'
-      };
-      resultsArray.push(processingResult);
-      setResults([...resultsArray]);
-
-      // Call server action for single member
-      const response = await addSingleMemberToGroup(groupId, username, addedUsernames);
-
-      // Update the result
-      resultsArray[i] = {
-        username: response.username,
-        status: response.status,
-        message: response.message
-      };
-      setResults([...resultsArray]);
-
-      // If successfully added, update the addedUsernames list
-      if (response.status === 'success') {
-        addedUsernames.push(response.username.toLowerCase());
-      }
-    }
+    const response = await addMembersToGroup(groupId, usernames);
 
     setIsProcessing(false);
-    setCurrentUsername('');
 
-    // Show summary toast
-    const successCount = resultsArray.filter((r) => r.status === 'success').length;
-    const skipCount = resultsArray.filter((r) => r.status === 'skipped').length;
-    const errorCount = resultsArray.filter((r) => r.status === 'error').length;
-
-    if (successCount > 0) {
-      toast.success(`Added ${successCount} member${successCount > 1 ? 's' : ''}`);
-    }
-    if (skipCount > 0) {
-      toast.info(`${skipCount} already in group`);
-    }
-    if (errorCount > 0) {
-      toast.error(`${errorCount} failed validation`);
+    if (!response.success) {
+      toast.error(response.error || 'Failed to add members');
+      return;
     }
 
-    // Clear input after processing
+    if (response.results) {
+      setResults(response.results);
+
+      const successCount = response.results.filter((r) => r.status === 'success').length;
+      const skipCount = response.results.filter((r) => r.status === 'skipped').length;
+      const errorCount = response.results.filter((r) => r.status === 'error').length;
+
+      if (successCount > 0) {
+        toast.success(`Added ${successCount} member${successCount > 1 ? 's' : ''}`);
+      }
+      if (skipCount > 0) {
+        toast.info(`${skipCount} already in group`);
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount} failed validation`);
+      }
+    }
+
     setInput('');
     router.refresh();
   };
@@ -170,32 +135,27 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
               setShowResults(false);
             }}
             placeholder="username1&#10;username2&#10;username3&#10;&#10;or: user1, user2, user3"
-            className="min-h-[200px] bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 resize-none font-mono text-sm focus:border-neutral-600 focus:ring-neutral-600"
+            className="min-h-50 bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 resize-none font-mono text-sm focus:border-neutral-600 focus:ring-neutral-600"
             disabled={isProcessing}
           />
           <div className="flex items-center justify-between text-xs">
             <span className="text-neutral-500">
               {usernameCount > 0 ? `${usernameCount} username${usernameCount > 1 ? 's' : ''}` : 'No usernames entered'}
             </span>
-            <span className="text-neutral-600">Max 200 at once</span>
+            <span className="text-neutral-600">Max 50 at once</span>
           </div>
         </div>
 
         {/* Progress indicator */}
         {isProcessing && (
           <div className="space-y-2 p-3 rounded bg-blue-500/10 border border-blue-500/20">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-blue-400">Processing...</span>
-              <span className="text-blue-300 font-mono">
-                {progress.current}/{progress.total}
-              </span>
+            <div className="flex items-center gap-2 text-sm text-blue-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Validating & adding {usernameCount} usernames...</span>
             </div>
-            {currentUsername && (
-              <div className="flex items-center gap-2 text-xs text-blue-300">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span className="font-mono">{currentUsername}</span>
-              </div>
-            )}
+            <p className="text-xs text-blue-300/70">
+              LeetCode usernames are verified in parallel. This may take a moment.
+            </p>
           </div>
         )}
 
@@ -207,7 +167,7 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
           {isProcessing ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Adding {progress.current}/{progress.total}...
+              Processing...
             </>
           ) : (
             <>
