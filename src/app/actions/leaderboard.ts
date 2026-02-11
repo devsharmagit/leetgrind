@@ -101,6 +101,15 @@ export async function refreshGroupStats(groupId: number) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     // Get all members of the group
     const group = await prisma.group.findUnique({
       where: { id: groupId },
@@ -115,6 +124,11 @@ export async function refreshGroupStats(groupId: number) {
 
     if (!group) {
       return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only refresh stats for groups you own.' };
     }
 
     const today = new Date();
@@ -223,6 +237,15 @@ export async function getGroupLeaderboard(groupId: number) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -231,6 +254,7 @@ export async function getGroupLeaderboard(groupId: number) {
       where: { id: groupId },
       select: {
         id: true,
+        ownerId: true,
         members: {
           select: {
             leetcodeProfile: {
@@ -266,6 +290,11 @@ export async function getGroupLeaderboard(groupId: number) {
 
     if (!group) {
       return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only view groups you own.' };
     }
 
     // Build leaderboard data
@@ -320,6 +349,15 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -331,6 +369,7 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
       where: { id: groupId },
       select: {
         id: true,
+        ownerId: true,
         members: {
           select: {
             leetcodeProfile: {
@@ -359,6 +398,11 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
 
     if (!group) {
       return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only view groups you own.' };
     }
 
     // Calculate gains for each member with improved fallback logic
@@ -443,6 +487,15 @@ export async function saveLeaderboardSnapshot(groupId: number) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -458,6 +511,11 @@ export async function saveLeaderboardSnapshot(groupId: number) {
 
     if (!group) {
       return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only save snapshots for groups you own.' };
     }
 
     if (group._count.members < 5) {
@@ -514,6 +572,30 @@ export async function getLeaderboardHistory(groupId: number, days: number = 30) 
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    // Check ownership
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { ownerId: true },
+    });
+
+    if (!group) {
+      return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only view history for groups you own.' };
+    }
+
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);

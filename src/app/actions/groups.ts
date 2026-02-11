@@ -332,6 +332,10 @@ export async function getGroupDetails(groupId: number) {
       where: { email: session.user.email },
     });
 
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       include: {
@@ -358,7 +362,12 @@ export async function getGroupDetails(groupId: number) {
       return { success: false, error: 'Group not found' };
     }
 
-    return { success: true, data: group, currentUserId: user?.id ?? null };
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only view groups you own.' };
+    }
+
+    return { success: true, data: group, currentUserId: user.id };
   } catch (error) {
     console.error('Error fetching group details:', error);
     return { success: false, error: 'Failed to fetch group details' };

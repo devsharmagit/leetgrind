@@ -120,7 +120,7 @@ export function Leaderboard({ groupId, isOwner }: LeaderboardProps) {
       {/* Header with Refresh Button */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Leaderboard</h2>
-        {isOwner && (
+        {/* {isOwner && (
           <Button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -136,7 +136,7 @@ export function Leaderboard({ groupId, isOwner }: LeaderboardProps) {
               "🔄 Refresh Stats"
             )}
           </Button>
-        )}
+        )} */}
       </div>
 
       {/* Main Leaderboard */}

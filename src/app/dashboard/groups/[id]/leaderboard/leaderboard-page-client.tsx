@@ -370,24 +370,26 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href={`/dashboard/groups/${group.publicId}/leaderboard/history`}>
-                  <Button
-                    variant="outline"
-                    className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
-                  >
-                    <History className="h-4 w-4 mr-2" />
-                    View History
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
-                View leaderboard history and trends
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {isOwner && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={`/dashboard/groups/${group.publicId}/leaderboard/history`}>
+                    <Button
+                      variant="outline"
+                      className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      View History
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
+                  View leaderboard history and trends
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {isOwner && (
             <>
               <TooltipProvider>
@@ -410,7 +412,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
+                    {/* <Button
                       onClick={handleRefresh}
                       disabled={refreshing}
                       className="bg-white text-black hover:bg-neutral-200"
@@ -423,7 +425,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                       ) : (
                         '🔄 Refresh Stats'
                       )}
-                    </Button>
+                    </Button> */}
                   </TooltipTrigger>
                   <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
                     Fetch latest stats from LeetCode
@@ -479,7 +481,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                     <TableHead className="text-neutral-400 text-right hidden sm:table-cell">
                       <span className="text-red-500">H</span>
                     </TableHead>
-                    <TableHead className="text-neutral-400 text-right">Actions</TableHead>
+                    {isOwner && <TableHead className="text-neutral-400 text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -515,26 +517,28 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                         <TableCell className="text-green-500 text-right hidden sm:table-cell">{entry.easySolved}</TableCell>
                         <TableCell className="text-yellow-500 text-right hidden sm:table-cell">{entry.mediumSolved}</TableCell>
                         <TableCell className="text-red-500 text-right hidden sm:table-cell">{entry.hardSolved}</TableCell>
-                        <TableCell className="text-right">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Link href={`/dashboard/groups/${group.publicId}/profile/${entry.username}`}>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-neutral-400 hover:text-white h-8 w-8 p-0"
-                                  >
-                                    <History className="h-4 w-4" />
-                                  </Button>
-                                </Link>
-                              </TooltipTrigger>
-                              <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
-                                View profile history
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </TableCell>
+                        {isOwner && (
+                          <TableCell className="text-right">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Link href={`/dashboard/groups/${group.publicId}/profile/${entry.username}`}>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-neutral-400 hover:text-white h-8 w-8 p-0"
+                                    >
+                                      <History className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
+                                  View profile history
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}

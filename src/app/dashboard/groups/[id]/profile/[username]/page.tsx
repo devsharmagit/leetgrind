@@ -45,6 +45,11 @@ async function ProfileHistoryContent({ groupIdentifier, username }: { groupIdent
     notFound();
   }
 
+  // Only the group owner can view profile history
+  if (!groupResult.currentUserId || groupResult.data.ownerId !== groupResult.currentUserId) {
+    redirect(`/dashboard/groups/${groupIdentifier}/leaderboard`);
+  }
+
   if (!profileResult.success || !profileResult.data) {
     notFound();
   }
