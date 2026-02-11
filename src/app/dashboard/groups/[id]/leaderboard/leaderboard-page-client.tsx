@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, History, TrendingUp, Trophy, Settings, Flame, AlertCircle } from 'lucide-react';
+import { ArrowLeft, History, TrendingUp, Trophy, Settings, Flame, Share2, Check } from 'lucide-react';
+import { NoGainerData } from '@/components/no-gainer-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
@@ -100,6 +101,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
   const [settingsName, setSettingsName] = useState(group.name);
   const [settingsVisibility, setSettingsVisibility] = useState<'UNLISTED' | 'PRIVATE'>(group.visibility);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const loadLeaderboard = useCallback(async () => {
     setLoading(true);
@@ -182,6 +184,17 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
     } finally {
       setSavingSettings(false);
     }
+  }
+
+  function handleShare() {
+    const publicUrl = `${window.location.origin}/group/${group.publicId}/leaderboard`;
+    navigator.clipboard.writeText(publicUrl).then(() => {
+      setCopied(true);
+      toast.success('Public leaderboard link copied to clipboard!');
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      toast.error('Failed to copy link');
+    });
   }
 
   if (loading) {
@@ -340,6 +353,23 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleShare}
+                  className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+                >
+                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
+                {copied ? 'Link copied!' : 'Share public leaderboard link'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -516,7 +546,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
       </Card>
 
       {/* Top Gainer Highlight */}
-      <Card className="border-neutral-800 bg-linear-to-r from-orange-500/10 via-neutral-900 to-neutral-900">
+      <Card className="border-neutral-800 bg-neutral-900">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Flame className="h-5 w-5 text-orange-500" />
@@ -547,12 +577,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3 py-2">
-              <AlertCircle className="h-5 w-5 text-neutral-500 shrink-0" />
-              <p className="text-neutral-400 text-sm">
-                No gainer data available yet. At least 7 days of stats are needed to calculate top gainers.
-              </p>
-            </div>
+            <NoGainerData />
           )}
         </CardContent>
       </Card>
