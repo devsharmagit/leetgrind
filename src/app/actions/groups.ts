@@ -601,6 +601,64 @@ export async function addSingleMemberToGroup(
   }
 }
 
+export async function updateGroupSettings(
+  groupId: number,
+  settings: { name?: string; visibility?: 'UNLISTED' | 'PRIVATE' }
+) {
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    return { success: false, error: 'Unauthorized. Please log in.' };
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+    });
+
+    if (!group) {
+      return { success: false, error: 'Group not found' };
+    }
+
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'You can only update groups you own.' };
+    }
+
+    const updateData: { name?: string; visibility?: 'UNLISTED' | 'PRIVATE' } = {};
+    if (settings.name !== undefined) {
+      const trimmed = settings.name.trim();
+      if (trimmed.length < 2) {
+        return { success: false, error: 'Group name must be at least 2 characters.' };
+      }
+      updateData.name = trimmed;
+    }
+    if (settings.visibility !== undefined) {
+      updateData.visibility = settings.visibility;
+    }
+
+    const updated = await prisma.group.update({
+      where: { id: groupId },
+      data: updateData,
+    });
+
+    revalidatePath(`/dashboard/groups/${groupId}`);
+    revalidatePath('/dashboard');
+
+    return { success: true, data: updated };
+  } catch (error) {
+    console.error('Error updating group settings:', error);
+    return { success: false, error: 'Failed to update group settings' };
+  }
+}
+
 export async function addMembersToGroup(groupId: number, usernames: string[]) {
   // --- 1. Auth + ownership check (ONCE) ---
   const session = await auth();

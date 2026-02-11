@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, History, TrendingUp, Trophy } from 'lucide-react';
+import { ArrowLeft, History, TrendingUp, Trophy, Settings, Flame, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
@@ -15,11 +15,28 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   refreshGroupStats,
   getGroupLeaderboard,
   getGroupGainers,
   saveLeaderboardSnapshot,
 } from '@/app/actions/leaderboard';
+import { updateGroupSettings } from '@/app/actions/groups';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -48,6 +65,7 @@ interface LeaderboardPageClientProps {
     id: number;
     publicId: string;
     name: string;
+    visibility: 'UNLISTED' | 'PRIVATE';
     ownerId: number;
     owner: {
       id: number;
@@ -78,6 +96,10 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
   const [lastSnapshotDate, setLastSnapshotDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsName, setSettingsName] = useState(group.name);
+  const [settingsVisibility, setSettingsVisibility] = useState<'UNLISTED' | 'PRIVATE'>(group.visibility);
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const loadLeaderboard = useCallback(async () => {
     setLoading(true);
@@ -139,6 +161,27 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
   function formatRank(rank: number): string {
     if (rank >= 5000000) return '~5000000';
     return rank.toLocaleString();
+  }
+
+  async function handleSaveSettings() {
+    setSavingSettings(true);
+    try {
+      const result = await updateGroupSettings(group.id, {
+        name: settingsName,
+        visibility: settingsVisibility,
+      });
+      if (result.success) {
+        toast.success('Group settings updated');
+        setSettingsOpen(false);
+        router.refresh();
+      } else {
+        toast.error(result.error || 'Failed to update settings');
+      }
+    } catch {
+      toast.error('Failed to update settings');
+    } finally {
+      setSavingSettings(false);
+    }
   }
 
   if (loading) {
@@ -297,30 +340,67 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/dashboard/groups/${group.publicId}/leaderboard/history`}>
-            <Button
-              variant="outline"
-              className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
-            >
-              <History className="h-4 w-4 mr-2" />
-              View History
-            </Button>
-          </Link>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href={`/dashboard/groups/${group.publicId}/leaderboard/history`}>
+                  <Button
+                    variant="outline"
+                    className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+                  >
+                    <History className="h-4 w-4 mr-2" />
+                    View History
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
+                View leaderboard history and trends
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {isOwner && (
-            <Button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="bg-white text-black hover:bg-neutral-200"
-            >
-              {refreshing ? (
-                <>
-                  <Spinner className="mr-2 h-4 w-4" />
-                  Refreshing...
-                </>
-              ) : (
-                '🔄 Refresh Stats'
-              )}
-            </Button>
+            <>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setSettingsOpen(true)}
+                      className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
+                    Group Settings
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleRefresh}
+                      disabled={refreshing}
+                      className="bg-white text-black hover:bg-neutral-200"
+                    >
+                      {refreshing ? (
+                        <>
+                          <Spinner className="mr-2 h-4 w-4" />
+                          Refreshing...
+                        </>
+                      ) : (
+                        '🔄 Refresh Stats'
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
+                    Fetch latest stats from LeetCode
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </>
           )}
         </div>
       </div>
@@ -391,7 +471,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                             href={`https://leetcode.com/${entry.username}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hover:underline truncate block max-w-[150px] sm:max-w-none"
+                            className="hover:underline truncate block max-w-37.5 sm:max-w-none"
                           >
                             {entry.username}
                           </a>
@@ -406,15 +486,24 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                         <TableCell className="text-yellow-500 text-right hidden sm:table-cell">{entry.mediumSolved}</TableCell>
                         <TableCell className="text-red-500 text-right hidden sm:table-cell">{entry.hardSolved}</TableCell>
                         <TableCell className="text-right">
-                          <Link href={`/dashboard/groups/${group.publicId}/profile/${entry.username}`}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-neutral-400 hover:text-white h-8 w-8 p-0"
-                            >
-                              <History className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Link href={`/dashboard/groups/${group.publicId}/profile/${entry.username}`}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-neutral-400 hover:text-white h-8 w-8 p-0"
+                                  >
+                                    <History className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
+                                View profile history
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                       </TableRow>
                     );
@@ -426,11 +515,56 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
         </CardContent>
       </Card>
 
-      {/* Top Gainers (7 days) */}
-      {gainers.length > 0 && (
+      {/* Top Gainer Highlight */}
+      <Card className="border-neutral-800 bg-linear-to-r from-orange-500/10 via-neutral-900 to-neutral-900">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Flame className="h-5 w-5 text-orange-500" />
+            Top Gainer (Last 7 Days)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {gainers.length > 0 ? (
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                <span className="text-2xl">🔥</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <a
+                  href={`https://leetcode.com/${gainers[0].username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xl font-bold text-white hover:underline font-mono"
+                >
+                  {gainers[0].username}
+                </a>
+                <div className="flex items-center gap-4 mt-1 text-sm">
+                  <span className="text-green-400 font-semibold">+{gainers[0].problemsGained} problems solved</span>
+                  {gainers[0].rankImproved > 0 && (
+                    <span className="text-green-400">↑ {gainers[0].rankImproved.toLocaleString()} rank</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 py-2">
+              <AlertCircle className="h-5 w-5 text-neutral-500 shrink-0" />
+              <p className="text-neutral-400 text-sm">
+                No gainer data available yet. At least 7 days of stats are needed to calculate top gainers.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Top Gainers Table (7 days) */}
+      {gainers.length > 1 && (
         <Card className="border-neutral-800 bg-neutral-900">
           <CardHeader>
-            <CardTitle className="text-white">🔥 Top Gainers (Last 7 Days)</CardTitle>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-500" />
+              All Gainers (Last 7 Days)
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -505,6 +639,82 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
           </Card>
         )}
       </div>
+
+      {/* Group Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="bg-neutral-900 border-neutral-800">
+          <DialogHeader>
+            <DialogTitle className="text-white">Group Settings</DialogTitle>
+            <DialogDescription className="text-neutral-400">
+              Update your group name and visibility settings.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="group-name" className="text-neutral-300">Group Name</Label>
+              <Input
+                id="group-name"
+                value={settingsName}
+                onChange={(e) => setSettingsName(e.target.value)}
+                className="bg-neutral-800 border-neutral-700 text-white"
+                placeholder="Group name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-neutral-300">Visibility</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSettingsVisibility('UNLISTED')}
+                  className={`p-3 rounded-lg border text-left transition-colors ${
+                    settingsVisibility === 'UNLISTED'
+                      ? 'border-white bg-white/10 text-white'
+                      : 'border-neutral-700 bg-neutral-800 text-neutral-400 hover:border-neutral-600 hover:text-neutral-300'
+                  }`}
+                >
+                  <div className="font-medium text-sm">Unlisted</div>
+                  <p className="text-xs mt-1 opacity-70">Anyone with the link can view</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettingsVisibility('PRIVATE')}
+                  className={`p-3 rounded-lg border text-left transition-colors ${
+                    settingsVisibility === 'PRIVATE'
+                      ? 'border-white bg-white/10 text-white'
+                      : 'border-neutral-700 bg-neutral-800 text-neutral-400 hover:border-neutral-600 hover:text-neutral-300'
+                  }`}
+                >
+                  <div className="font-medium text-sm">Private</div>
+                  <p className="text-xs mt-1 opacity-70">Only you can view this group</p>
+                </button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSettingsOpen(false)}
+              className="border-neutral-700 bg-transparent text-neutral-300 hover:bg-neutral-800 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveSettings}
+              disabled={savingSettings || !settingsName.trim()}
+              className="bg-white text-black hover:bg-neutral-200"
+            >
+              {savingSettings ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

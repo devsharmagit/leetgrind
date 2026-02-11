@@ -17,10 +17,12 @@ import {
 import { getLeaderboardHistory } from '@/app/actions/leaderboard';
 import { toast } from 'sonner';
 import {
+  ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  type ChartConfig,
 } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface LeaderboardEntry {
   username: string;
@@ -344,8 +346,7 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-80 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer config={{} satisfies ChartConfig} className="h-80 w-full">
                     <LineChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#404040" />
                       <XAxis 
@@ -378,8 +379,7 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
                           ))
                       }
                     </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                </ChartContainer>
                 {/* Legend */}
                 <div className="flex flex-wrap gap-4 mt-4 justify-center">
                   {snapshots.length > 0 && 
