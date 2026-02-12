@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { checkActionRateLimit } from "@/lib/rate-limit";
 
 interface LeetCodeStats {
   username: string;
@@ -94,6 +95,9 @@ export async function fetchLeetCodeStats(username: string): Promise<LeetCodeStat
 }
 
 export async function refreshGroupStats(groupId: number) {
+  const rateLimited = await checkActionRateLimit('refreshStats');
+  if (rateLimited) return rateLimited;
+
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -480,6 +484,9 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
 }
 
 export async function saveLeaderboardSnapshot(groupId: number) {
+  const rateLimited = await checkActionRateLimit('saveSnapshot');
+  if (rateLimited) return rateLimited;
+
   const session = await auth();
   
   if (!session?.user?.email) {

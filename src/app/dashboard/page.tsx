@@ -16,7 +16,7 @@ async function DashboardContent() {
 
   if (!result.success) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-96">
         <p className="text-red-500">Failed to load groups</p>
       </div>
     );

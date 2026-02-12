@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { checkActionRateLimit } from "@/lib/rate-limit";
 
 export interface AddMemberInput {
   groupId: number;
@@ -39,6 +40,9 @@ function normalizeUsername(username: string): string {
 }
 
 export async function createGroup(name: string) {
+  const rateLimited = await checkActionRateLimit('createGroup');
+  if (rateLimited) return rateLimited;
+
   // Check if user is logged in
   const session = await auth();
   
@@ -91,6 +95,9 @@ export async function createGroup(name: string) {
 }
 
 export async function deleteGroup(groupId: number) {
+  const rateLimited = await checkActionRateLimit('deleteGroup');
+  if (rateLimited) return rateLimited;
+
   // Check if user is logged in
   const session = await auth();
   
@@ -140,6 +147,9 @@ export async function deleteGroup(groupId: number) {
 }
 
 export async function addMemberToGroup(input: AddMemberInput) {
+  const rateLimited = await checkActionRateLimit('addMember');
+  if (rateLimited) return rateLimited;
+
   // Check if user is logged in
   const session = await auth();
   
@@ -225,6 +235,9 @@ export async function addMemberToGroup(input: AddMemberInput) {
 }
 
 export async function removeMemberFromGroup(groupId: number, leetcodeProfileId: number) {
+  const rateLimited = await checkActionRateLimit('removeMember');
+  if (rateLimited) return rateLimited;
+
   // Check if user is logged in
   const session = await auth();
   
@@ -614,6 +627,9 @@ export async function updateGroupSettings(
   groupId: number,
   settings: { name?: string; visibility?: 'UNLISTED' | 'PRIVATE' }
 ) {
+  const rateLimited = await checkActionRateLimit('updateGroup');
+  if (rateLimited) return rateLimited;
+
   const session = await auth();
 
   if (!session?.user?.email) {
@@ -669,6 +685,9 @@ export async function updateGroupSettings(
 }
 
 export async function addMembersToGroup(groupId: number, usernames: string[]) {
+  const rateLimited = await checkActionRateLimit('addMembers');
+  if (rateLimited) return rateLimited;
+
   // --- 1. Auth + ownership check (ONCE) ---
   const session = await auth();
   if (!session?.user?.email) {
