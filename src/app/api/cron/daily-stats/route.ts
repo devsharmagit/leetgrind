@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     
     // Get today's date
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
     
     // Fetch all LeetCode profiles
     const profiles = await prisma.leetcodeProfile.findMany({

@@ -132,7 +132,7 @@ export async function refreshGroupStats(groupId: number) {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     const results: Array<{
       username: string;
@@ -247,7 +247,7 @@ export async function getGroupLeaderboard(groupId: number) {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     // Get group with members and their latest stats - optimized query
     const group = await prisma.group.findUnique({
@@ -359,7 +359,7 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
     
     const pastDate = new Date(today);
     pastDate.setDate(pastDate.getDate() - days);
@@ -497,7 +497,7 @@ export async function saveLeaderboardSnapshot(groupId: number) {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     // Check member count - require minimum 5 members
     const group = await prisma.group.findUnique({
@@ -598,7 +598,7 @@ export async function getLeaderboardHistory(groupId: number, days: number = 30) 
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-    startDate.setHours(0, 0, 0, 0);
+    startDate.setUTCHours(0, 0, 0, 0);
 
     const snapshots = await prisma.leaderboardSnapshot.findMany({
       where: {
@@ -761,8 +761,8 @@ export async function getPublicGainers(publicId: string, days: number = 7) {
                 stats: {
                   where: {
                     date: {
-                      gte: (() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - days); return d; })(),
-                      lte: (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })(),
+                      gte: (() => { const d = new Date(); d.setUTCHours(0,0,0,0); d.setDate(d.getDate() - days); return d; })(),
+                      lte: (() => { const d = new Date(); d.setUTCHours(0,0,0,0); return d; })(),
                     },
                   },
                   orderBy: { date: 'asc' as const },
