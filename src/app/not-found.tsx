@@ -5,10 +5,7 @@ import { Code2, ArrowLeft, Home } from 'lucide-react';
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Background grid */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_110%)]" />
-      </div>
+      
 
       <div className="relative z-10 text-center max-w-lg mx-auto">
         {/* 404 Number */}
