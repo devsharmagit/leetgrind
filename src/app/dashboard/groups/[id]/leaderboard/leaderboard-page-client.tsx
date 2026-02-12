@@ -412,7 +412,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    {/* <Button
+                    <Button
                       onClick={handleRefresh}
                       disabled={refreshing}
                       className="bg-white text-black hover:bg-neutral-200"
@@ -425,7 +425,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                       ) : (
                         '🔄 Refresh Stats'
                       )}
-                    </Button> */}
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
                     Fetch latest stats from LeetCode
