@@ -360,7 +360,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                   variant="outline"
                   size="icon"
                   onClick={handleShare}
-                  className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+                  className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800 hover:text-white"
                 >
                   {copied ? <Check className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
                 </Button>
@@ -377,7 +377,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                   <Link href={`/dashboard/groups/${group.publicId}/leaderboard/history`}>
                     <Button
                       variant="outline"
-                      className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+                      className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800 hover:text-white"
                     >
                       <History className="h-4 w-4 mr-2" />
                       View History
@@ -399,7 +399,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                       variant="outline"
                       size="icon"
                       onClick={() => setSettingsOpen(true)}
-                      className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+                      className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800 hover:text-white"
                     >
                       <Settings className="h-4 w-4" />
                     </Button>
@@ -412,7 +412,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
+                    {/* <Button
                       onClick={handleRefresh}
                       disabled={refreshing}
                       className="bg-white text-black hover:bg-neutral-200"
@@ -425,7 +425,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                       ) : (
                         '🔄 Refresh Stats'
                       )}
-                    </Button>
+                    </Button> */}
                   </TooltipTrigger>
                   <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
                     Fetch latest stats from LeetCode
