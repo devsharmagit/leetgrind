@@ -95,7 +95,7 @@ export default function CreateGroupDialog({
             <Button
               type="submit"
               disabled={isSubmitting || !groupName.trim()}
-              className="bg-white text-black hover:bg-neutral-200"
+              className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold"
             >
               {isSubmitting ? 'Creating...' : 'Create Group'}
             </Button>

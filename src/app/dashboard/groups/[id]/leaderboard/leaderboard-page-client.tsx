@@ -289,7 +289,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
               <div className="pt-4">
                 <Button
                   onClick={() => router.push(`/dashboard/groups/${group.publicId}`)}
-                  className="bg-white text-black hover:bg-neutral-200"
+                  className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Group
@@ -365,7 +365,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                   {copied ? <Check className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="bg-neutral-800 text-white border-neutral-700">
+              <TooltipContent  className="bg-neutral-800 text-white border-neutral-700">
                 {copied ? 'Link copied!' : 'Share public leaderboard link'}
               </TooltipContent>
             </Tooltip>
@@ -415,7 +415,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                     {/* <Button
                       onClick={handleRefresh}
                       disabled={refreshing}
-                      className="bg-white text-black hover:bg-neutral-200"
+                      className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold"
                     >
                       {refreshing ? (
                         <>
@@ -526,7 +526,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="text-neutral-400 hover:text-white h-8 w-8 p-0"
+                                      className="text-neutral-400  h-8 w-8 p-0"
                                     >
                                       <History className="h-4 w-4" />
                                     </Button>
@@ -697,7 +697,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                   onClick={() => setSettingsVisibility('UNLISTED')}
                   className={`p-3 rounded-lg border text-left transition-colors ${
                     settingsVisibility === 'UNLISTED'
-                      ? 'border-white bg-white/10 text-white'
+                      ? 'border-yellow-500 bg-yellow-500/10 text-white'
                       : 'border-neutral-700 bg-neutral-800 text-neutral-400 hover:border-neutral-600 hover:text-neutral-300'
                   }`}
                 >
@@ -709,7 +709,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
                   onClick={() => setSettingsVisibility('PRIVATE')}
                   className={`p-3 rounded-lg border text-left transition-colors ${
                     settingsVisibility === 'PRIVATE'
-                      ? 'border-white bg-white/10 text-white'
+                      ? 'border-yellow-500 bg-yellow-500/10 text-white'
                       : 'border-neutral-700 bg-neutral-800 text-neutral-400 hover:border-neutral-600 hover:text-neutral-300'
                   }`}
                 >
@@ -730,7 +730,7 @@ export default function LeaderboardPageClient({ group, isOwner }: LeaderboardPag
             <Button
               onClick={handleSaveSettings}
               disabled={savingSettings || !settingsName.trim()}
-              className="bg-white text-black hover:bg-neutral-200"
+              className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold"
             >
               {savingSettings ? (
                 <>
