@@ -50,7 +50,7 @@ export default function DashboardClient({ groups, userId }: DashboardClientProps
         </div>
         <Button
           onClick={() => setCreateDialogOpen(true)}
-          className="bg-white text-black hover:bg-neutral-200 transition-all duration-300"
+          className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold transition-all duration-300"
         >
           <Plus className="mr-2 h-4 w-4" />
           Create Group
@@ -71,7 +71,7 @@ export default function DashboardClient({ groups, userId }: DashboardClientProps
           </p>
           <Button
             onClick={() => setCreateDialogOpen(true)}
-            className="bg-white text-black hover:bg-neutral-200"
+            className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold"
           >
             <Plus className="mr-2 h-4 w-4" />
             Create Your First Group

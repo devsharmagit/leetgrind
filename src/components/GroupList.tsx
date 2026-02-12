@@ -44,7 +44,7 @@ export default function GroupList({ groups }: GroupListProps) {
 
   if (groups.length === 0) {
     return (
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-neutral-400">
         No groups yet. Create your first group above.
       </p>
     );
@@ -53,18 +53,18 @@ export default function GroupList({ groups }: GroupListProps) {
   return (
     <div className="space-y-3">
       {error && (
-        <p className="text-sm text-red-600 p-2 bg-red-50 rounded border border-red-200">
+        <p className="text-sm text-red-400 p-2 bg-red-500/10 rounded border border-red-500/20">
           {error}
         </p>
       )}
       {groups.map(group => (
         <div
           key={group.id}
-          className="flex items-center justify-between rounded-md border border-black/10 px-4 py-3"
+          className="flex items-center justify-between rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 hover:border-neutral-700 transition-colors"
         >
           <div>
-            <p className="text-black font-medium">{group.name}</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-white font-medium">{group.name}</p>
+            <p className="text-xs text-neutral-500">
               Members: {group._count.users}
             </p>
           </div>
@@ -73,7 +73,7 @@ export default function GroupList({ groups }: GroupListProps) {
             size="sm"
             onClick={() => handleDelete(group.id)}
             disabled={isPending && deletingId === group.id}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
           >
             {isPending && deletingId === group.id ? (
               <span className="text-xs">Deleting...</span>

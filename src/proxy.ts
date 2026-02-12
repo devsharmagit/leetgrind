@@ -57,12 +57,9 @@ export default auth(async (req) => {
   // ── Auth redirects ────────────────────────────────────────────
   const isLoggedIn = !!req.auth?.user
 
-  // Home page: redirect based on auth state
-  if (pathname === "/") {
-    if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/dashboard", req.url))
-    }
-    return NextResponse.redirect(new URL("/login", req.url))
+  // Home page: redirect logged-in users to dashboard
+  if (pathname === "/" && isLoggedIn) {
+    return NextResponse.redirect(new URL("/dashboard", req.url))
   }
 
   // Already logged in users shouldn't see login/signup

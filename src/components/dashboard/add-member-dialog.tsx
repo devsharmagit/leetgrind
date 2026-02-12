@@ -62,20 +62,20 @@ export default function AddMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700 sm:max-w-md">
+      <DialogContent className="bg-neutral-900 border-neutral-800 sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-slate-100 text-2xl font-bold">
+            <DialogTitle className="text-white text-2xl font-bold">
               Add Member
             </DialogTitle>
-            <DialogDescription className="text-slate-400">
-              Add a member to <span className="text-cyan-400 font-medium">{groupName}</span>
+            <DialogDescription className="text-neutral-400">
+              Add a member to <span className="text-yellow-500 font-medium">{groupName}</span>
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-6">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-slate-300">
+              <Label htmlFor="username" className="text-neutral-300">
                 LeetCode Username
               </Label>
               <Input
@@ -83,10 +83,10 @@ export default function AddMemberDialog({
                 placeholder="e.g., john_doe"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/20"
+                className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-neutral-600 focus:ring-neutral-600"
                 autoFocus
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-neutral-500">
                 Valid format: letters, numbers, underscore (_), hyphen (-), max 15 characters
               </p>
             </div>
@@ -98,14 +98,14 @@ export default function AddMemberDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+              className="bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-700 hover:text-white"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !username.trim()}
-              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg shadow-cyan-500/30"
+              className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold"
             >
               {isSubmitting ? 'Adding...' : 'Add Member'}
             </Button>

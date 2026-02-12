@@ -105,7 +105,7 @@ export default function ProfileHistoryClient({ group, profile }: ProfileHistoryC
         >
           <Button
             variant="outline"
-            className="border-neutral-700 bg-transparent text-white hover:bg-neutral-800"
+            className="border-neutral-700 bg-transparent text-white hover:text-white hover:bg-neutral-800"
           >
             <ExternalLink className="h-4 w-4 mr-2" />
             View on LeetCode

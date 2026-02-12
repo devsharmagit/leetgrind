@@ -181,12 +181,12 @@ export default function GroupDetailsClient({ group, isOwner }: GroupDetailsClien
             </div>
             {group._count.members >= 5 ? (
               <Link href={`/dashboard/groups/${group.publicId}/leaderboard`}>
-                <Button className="bg-white text-black hover:bg-neutral-200">
+                <Button className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold">
                   View Leaderboard
                 </Button>
               </Link>
             ) : (
-              <Button disabled className="bg-neutral-700 text-neutral-500 cursor-not-allowed">
+              <Button disabled className="bg-neutral-800 text-neutral-500 cursor-not-allowed">
                 View Leaderboard
               </Button>
             )}

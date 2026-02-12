@@ -96,7 +96,7 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
       case 'skipped':
         return <AlertCircle className="h-4 w-4 text-yellow-500" />;
       case 'processing':
-        return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
+        return <Loader2 className="h-4 w-4 text-yellow-500 animate-spin" />;
     }
   };
 
@@ -162,7 +162,7 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
         <Button
           onClick={handleSubmit}
           disabled={isProcessing || usernameCount === 0}
-          className="w-full bg-white text-black hover:bg-neutral-200 disabled:bg-neutral-700 disabled:text-neutral-500"
+          className="w-full bg-yellow-500 text-black hover:bg-yellow-400 font-semibold disabled:bg-neutral-700 disabled:text-neutral-500"
         >
           {isProcessing ? (
             <>

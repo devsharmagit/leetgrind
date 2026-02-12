@@ -37,10 +37,10 @@ export default function GroupCreateCard() {
   };
 
   return (
-    <Card className="border-black bg-white">
+    <Card className="border-neutral-800 bg-neutral-900">
       <CardHeader>
-        <CardTitle className="text-black">Create a group</CardTitle>
-        <CardDescription className="text-gray-600">
+        <CardTitle className="text-white">Create a group</CardTitle>
+        <CardDescription className="text-neutral-400">
           Start a new leaderboard for your friends.
         </CardDescription>
       </CardHeader>
@@ -51,18 +51,18 @@ export default function GroupCreateCard() {
               value={name}
               onChange={event => setName(event.target.value)}
               placeholder="Group name"
-              className="border-black/20"
+              className="bg-neutral-800 border-neutral-700 text-white placeholder:text-neutral-500 focus:border-neutral-600 focus:ring-neutral-600"
               disabled={isPending}
             />
             <Button
               type="submit"
-              className="bg-black text-white hover:bg-gray-800"
+              className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold"
               disabled={isPending || name.trim().length < 2}
             >
               {isPending ? "Creating..." : "Create"}
             </Button>
           </div>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="text-sm text-red-400">{error}</p> : null}
         </form>
       </CardContent>
     </Card>

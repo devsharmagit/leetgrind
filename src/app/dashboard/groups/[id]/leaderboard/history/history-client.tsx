@@ -265,7 +265,7 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
               <div className="pt-4">
                 <Button
                   onClick={() => router.push(`/dashboard/groups/${group.publicId}`)}
-                  className="bg-white text-black hover:bg-neutral-200"
+                  className="bg-yellow-500 text-black hover:bg-yellow-400 font-semibold"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Group
@@ -314,7 +314,7 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
         </Button>
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-            <Calendar className="h-7 w-7 text-blue-500" />
+            <Calendar className="h-7 w-7 text-yellow-500" />
             Leaderboard History
           </h1>
           <p className="text-neutral-400 text-sm mt-1">{group.name}</p>
@@ -481,7 +481,7 @@ export default function LeaderboardHistoryClient({ group }: LeaderboardHistoryCl
           {/* Historical Snapshots */}
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-500" />
+              <Calendar className="h-5 w-5 text-yellow-500" />
               Historical Snapshots
             </h2>
           {snapshots.map((snapshot) => {

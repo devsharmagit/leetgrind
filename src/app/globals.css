@@ -123,3 +123,70 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ─── Landing page animations ─── */
+
+@keyframes hero-fade-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hero-fade-in-logo {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes leaderboard-row {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes count-pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes rank-badge {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-hero-fade-in {
+  animation: hero-fade-in 0.8s ease-out both;
+}
+
+.animate-hero-logo {
+  animation: hero-fade-in-logo 0.7s ease-out both;
+}
+
+.animate-lb-row {
+  animation: leaderboard-row 0.6s ease-out both;
+}
+
+.animate-count-pulse {
+  animation: count-pulse 0.4s ease-in-out;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+.animate-rank-badge {
+  animation: rank-badge 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
