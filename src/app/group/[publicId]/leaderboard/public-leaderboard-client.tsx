@@ -327,7 +327,7 @@ export default function PublicLeaderboardClient({ publicId }: PublicLeaderboardC
           {/* Footer */}
           <div className="text-center py-4">
             <p className="text-neutral-500 text-sm">
-              Powered by <span className="text-white font-semibold">Daily Leet</span>
+              Powered by <span className="text-white font-semibold">Leet <span className='text-yellow-500'> Grind </span> </span>
             </p>
           </div>
         </div>
