@@ -101,6 +101,15 @@ export async function refreshGroupStats(groupId: number) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     // Get all members of the group
     const group = await prisma.group.findUnique({
       where: { id: groupId },
@@ -115,6 +124,11 @@ export async function refreshGroupStats(groupId: number) {
 
     if (!group) {
       return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only refresh stats for groups you own.' };
     }
 
     const today = new Date();
@@ -223,6 +237,15 @@ export async function getGroupLeaderboard(groupId: number) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -231,6 +254,7 @@ export async function getGroupLeaderboard(groupId: number) {
       where: { id: groupId },
       select: {
         id: true,
+        ownerId: true,
         members: {
           select: {
             leetcodeProfile: {
@@ -266,6 +290,11 @@ export async function getGroupLeaderboard(groupId: number) {
 
     if (!group) {
       return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only view groups you own.' };
     }
 
     // Build leaderboard data
@@ -320,6 +349,15 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -331,6 +369,7 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
       where: { id: groupId },
       select: {
         id: true,
+        ownerId: true,
         members: {
           select: {
             leetcodeProfile: {
@@ -359,6 +398,11 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
 
     if (!group) {
       return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only view groups you own.' };
     }
 
     // Calculate gains for each member with improved fallback logic
@@ -443,6 +487,15 @@ export async function saveLeaderboardSnapshot(groupId: number) {
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -458,6 +511,11 @@ export async function saveLeaderboardSnapshot(groupId: number) {
 
     if (!group) {
       return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only save snapshots for groups you own.' };
     }
 
     if (group._count.members < 5) {
@@ -514,6 +572,30 @@ export async function getLeaderboardHistory(groupId: number, days: number = 30) 
   }
 
   try {
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    // Check ownership
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { ownerId: true },
+    });
+
+    if (!group) {
+      return { success: false, error: 'Group not found' };
+    }
+
+    // OWNERSHIP CHECK: Only allow access if user is the owner
+    if (group.ownerId !== user.id) {
+      return { success: false, error: 'Access denied. You can only view history for groups you own.' };
+    }
+
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
@@ -561,5 +643,163 @@ export async function getProfileHistory(username: string, days: number = 30) {
   } catch (error) {
     console.error('Error getting profile history:', error);
     return { success: false, error: 'Failed to get profile history' };
+  }
+}
+
+// ──────────────────────────────────────────────
+// Public (no-auth) leaderboard actions
+// ──────────────────────────────────────────────
+
+export async function getPublicLeaderboard(publicId: string) {
+  try {
+    const group = await prisma.group.findUnique({
+      where: { publicId },
+      select: {
+        id: true,
+        name: true,
+        publicId: true,
+        visibility: true,
+        owner: { select: { name: true } },
+        members: {
+          select: {
+            leetcodeProfile: {
+              select: {
+                username: true,
+                stats: {
+                  orderBy: { date: 'desc' as const },
+                  take: 1,
+                  select: {
+                    date: true,
+                    ranking: true,
+                    totalSolved: true,
+                    easySolved: true,
+                    mediumSolved: true,
+                    hardSolved: true,
+                    contestRating: true,
+                    rankingPoints: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: { select: { members: true } },
+        leaderboardSnapshots: {
+          orderBy: { date: 'desc' as const },
+          take: 1,
+          select: { date: true },
+        },
+      },
+    });
+
+    if (!group) {
+      return { success: false, error: 'Group not found' };
+    }
+
+    if (group.visibility === 'PRIVATE') {
+      return { success: false, error: 'This group is private' };
+    }
+
+    if (group._count.members < 5) {
+      return {
+        success: false,
+        error: 'Leaderboard requires at least 5 members',
+        groupName: group.name,
+        ownerName: group.owner.name,
+        memberCount: group._count.members,
+      };
+    }
+
+    const leaderboard = group.members.map(member => {
+      const latestStat = member.leetcodeProfile.stats[0];
+      return {
+        username: member.leetcodeProfile.username,
+        ranking: latestStat?.ranking ?? 5000000,
+        totalSolved: latestStat?.totalSolved ?? 0,
+        easySolved: latestStat?.easySolved ?? 0,
+        mediumSolved: latestStat?.mediumSolved ?? 0,
+        hardSolved: latestStat?.hardSolved ?? 0,
+        contestRating: latestStat?.contestRating ?? 0,
+        rankingPoints: latestStat?.rankingPoints ?? 0,
+        lastUpdated: latestStat?.date ?? null,
+      };
+    });
+
+    leaderboard.sort((a, b) => {
+      if (b.rankingPoints !== a.rankingPoints) return b.rankingPoints - a.rankingPoints;
+      if (a.ranking !== b.ranking) return a.ranking - b.ranking;
+      return a.username.localeCompare(b.username);
+    });
+
+    return {
+      success: true,
+      data: leaderboard,
+      groupName: group.name,
+      ownerName: group.owner.name,
+      memberCount: group._count.members,
+      lastSnapshotDate: group.leaderboardSnapshots[0]?.date ?? null,
+    };
+  } catch (error) {
+    console.error('Error getting public leaderboard:', error);
+    return { success: false, error: 'Failed to get leaderboard' };
+  }
+}
+
+export async function getPublicGainers(publicId: string, days: number = 7) {
+  try {
+    const group = await prisma.group.findUnique({
+      where: { publicId },
+      select: {
+        id: true,
+        visibility: true,
+        _count: { select: { members: true } },
+        members: {
+          select: {
+            leetcodeProfile: {
+              select: {
+                username: true,
+                stats: {
+                  where: {
+                    date: {
+                      gte: (() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - days); return d; })(),
+                      lte: (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })(),
+                    },
+                  },
+                  orderBy: { date: 'asc' as const },
+                  select: { date: true, totalSolved: true, ranking: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!group) return { success: false, error: 'Group not found' };
+    if (group.visibility === 'PRIVATE') return { success: false, error: 'This group is private' };
+    if (group._count.members < 5) return { success: false, error: 'Not enough members' };
+
+    const gainers = group.members.map(member => {
+      const stats = member.leetcodeProfile.stats;
+      const username = member.leetcodeProfile.username;
+      if (stats.length <= 1) {
+        return { username, problemsGained: 0, rankImproved: 0, currentSolved: stats[0]?.totalSolved ?? 0, currentRank: stats[0]?.ranking ?? 5000000 };
+      }
+      const oldest = stats[0];
+      const latest = stats[stats.length - 1];
+      const problemsGained = Math.max(0, (latest?.totalSolved ?? 0) - (oldest?.totalSolved ?? 0));
+      let rankImproved = 0;
+      if ((oldest?.ranking ?? 5000000) < 5000000 && (latest?.ranking ?? 5000000) < 5000000) {
+        rankImproved = (oldest?.ranking ?? 0) - (latest?.ranking ?? 0);
+      }
+      return { username, problemsGained, rankImproved, currentSolved: latest?.totalSolved ?? 0, currentRank: latest?.ranking ?? 5000000 };
+    });
+
+    gainers.sort((a, b) => b.problemsGained !== a.problemsGained ? b.problemsGained - a.problemsGained : b.rankImproved - a.rankImproved);
+
+    return { success: true, data: gainers.filter(g => g.problemsGained > 0) };
+  } catch (error) {
+    console.error('Error getting public gainers:', error);
+    return { success: false, error: 'Failed to get gainers' };
   }
 }

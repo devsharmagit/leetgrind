@@ -41,6 +41,11 @@ async function HistoryContent({ groupIdentifier }: { groupIdentifier: string }) 
     notFound();
   }
 
+  // Only the group owner can view history
+  if (!result.currentUserId || result.data.ownerId !== result.currentUserId) {
+    redirect(`/dashboard/groups/${groupIdentifier}/leaderboard`);
+  }
+
   return <LeaderboardHistoryClient group={result.data} />;
 }
 
