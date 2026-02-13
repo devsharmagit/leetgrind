@@ -200,21 +200,21 @@ score =
 
 The app uses **Vercel Cron Jobs** for automated stats collection:
 
-**🎉 On Vercel: Zero Configuration Required!**
+**🎉 On Vercel: Set `CRON_SECRET` and deploy!**
 
-Simply deploy to Vercel and the cron job automatically runs daily at 00:00 UTC. Vercel handles authentication automatically via the `x-vercel-cron` header.
+The cron job runs daily at 00:00 UTC. Vercel authenticates via the `x-vercel-cron` header. `CRON_SECRET` must be set as an environment variable in all environments.
 
-**For Local Testing (Optional):**
+**For Local Testing:**
 
 ```bash
-# 1. Generate a cron secret (for manual testing only)
+# 1. Generate a cron secret (required)
 openssl rand -base64 32
 
 # 2. Add to .env.local
 CRON_SECRET="your-generated-secret"
 
-# 3. Test manually
-curl http://localhost:3000/api/cron/daily-stats \
+# 3. Test manually (POST request)
+curl -X POST http://localhost:3000/api/cron/daily-stats \
   -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 
@@ -234,7 +234,8 @@ The cron job automatically:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/cron/daily-stats` | Daily stats cron (requires auth) |
+| GET | `/api/cron/daily-stats` | Daily stats cron (Vercel Cron only, `x-vercel-cron` header) |
+| POST | `/api/cron/daily-stats` | Daily stats cron (Bearer token auth) |
 
 ---
 
@@ -297,7 +298,7 @@ NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
-# Optional: Only needed for local testing of cron endpoint
+# Required: Secures the cron endpoint
 CRON_SECRET="your-cron-secret-here"
 ```
 
@@ -306,13 +307,13 @@ CRON_SECRET="your-cron-secret-here"
 # For NEXTAUTH_SECRET (required)
 openssl rand -base64 32
 
-# For CRON_SECRET (optional - only if you want to test cron locally)
+# For CRON_SECRET (required)
 openssl rand -base64 32
 ```
 
 **Get Google OAuth credentials:** See [AUTH_SETUP.md](AUTH_SETUP.md) for detailed instructions.
 
-> **Note:** On Vercel production, `CRON_SECRET` is not needed. The cron job authenticates automatically using Vercel's `x-vercel-cron` header.
+> **Note:** `CRON_SECRET` is **required** in all environments (including Vercel). On Vercel, the cron job authenticates automatically via the `x-vercel-cron` header, but the secret must still be set as an environment variable. Manual invocations use `POST` with a `Bearer` token.
 
 ### 5️⃣ Setup Database
 
