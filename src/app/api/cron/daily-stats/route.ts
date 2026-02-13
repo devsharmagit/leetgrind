@@ -25,42 +25,55 @@ async function processBatch<T, R>(
 }
 
 export async function GET(request: NextRequest) {
-  const startTime = Date.now();
-  
-  // Validate environment variables
+  // GET is reserved for Vercel Cron only (automatic x-vercel-cron header)
+  if (request.headers.get('x-vercel-cron') !== '1') {
+    return NextResponse.json(
+      { error: 'GET is only allowed from Vercel Cron. Use POST with Authorization header.' },
+      { status: 405 }
+    );
+  }
+
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
-    console.error('[CRON] CRON_SECRET environment variable is not set');
+    console.error('[CRON] CRON_SECRET environment variable is required but not set');
     return NextResponse.json(
       { error: 'Server configuration error' },
       { status: 500 }
     );
   }
-  
-  // Verify request is from Vercel Cron or authorized source
+
+  console.log('[CRON] Request authenticated via Vercel Cron header');
+  return handleDailyStats();
+}
+
+export async function POST(request: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error('[CRON] CRON_SECRET environment variable is required but not set');
+    return NextResponse.json(
+      { error: 'Server configuration error' },
+      { status: 500 }
+    );
+  }
+
   const authHeader = request.headers.get('authorization');
-  
-  // Check if request is from Vercel Cron (production)
-  const isVercelCron = request.headers.get('x-vercel-cron') === '1';
-  
-  // Check if request has valid authorization header (for manual testing)
-  const hasValidAuth = authHeader === `Bearer ${cronSecret}`;
-  
-  if (!isVercelCron && !hasValidAuth) {
-    console.warn('[CRON] Unauthorized access attempt', {
-      hasVercelCronHeader: !!request.headers.get('x-vercel-cron'),
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    console.warn('[CRON] Unauthorized POST attempt', {
       hasAuthHeader: !!authHeader,
-      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
     });
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
     );
   }
-  
-  console.log('[CRON] Request authenticated:', {
-    source: isVercelCron ? 'Vercel Cron' : 'Manual (with secret)',
-  });
+
+  console.log('[CRON] Request authenticated via Bearer token');
+  return handleDailyStats();
+}
+
+async function handleDailyStats() {
+  const startTime = Date.now();
 
   try {
     console.log('[CRON] Daily stats job started');

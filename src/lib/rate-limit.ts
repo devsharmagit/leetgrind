@@ -75,6 +75,7 @@ export function getIP(headers: Headers): string {
 
 /**
  * Check rate limit inside a server action.
+ * Automatically resolves userId for authenticated users, falls back to IP.
  * Returns `null` if allowed, or an error response object if rate-limited.
  */
 export async function checkActionRateLimit(
@@ -82,10 +83,20 @@ export async function checkActionRateLimit(
 ): Promise<{ success: false; error: string } | null> {
   if (!isRateLimitEnabled()) return null
 
-  const { headers } = await import("next/headers")
-  const hdrs = await headers()
-  const ip = getIP(hdrs)
-  const key = `${ip}:${actionName}`
+  // Prefer userId for authenticated users, fall back to IP
+  const { auth } = await import("@/auth")
+  const session = await auth()
+
+  let key: string
+  if (session?.user?.id) {
+    key = `uid:${session.user.id}:action:${actionName}`
+  } else {
+    const { headers } = await import("next/headers")
+    const hdrs = await headers()
+    const ip = getIP(hdrs)
+    key = `ip:${ip}:action:${actionName}`
+  }
+
   const { success } = await actionLimiter().limit(key)
 
   if (!success) {
