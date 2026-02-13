@@ -28,7 +28,8 @@ export default auth(async (req) => {
         ? apiLimiter()
         : pageLimiter()
 
-    const rlKey = `${ip}:${isApiRoute ? pathname : isAuthRoute ? "auth" : "page"}`
+    // Per-route + per-IP: each unique path gets its own rate-limit bucket
+    const rlKey = `${ip}:${pathname}`
     const { success, limit, remaining, reset } = await limiter.limit(rlKey)
 
     if (!success) {
