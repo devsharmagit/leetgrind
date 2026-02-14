@@ -5,11 +5,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkActionRateLimit } from "@/lib/rate-limit";
-import {
-  normalizeUsername,
-  validateUsernameFormat,
-  validateLeetCodeUsername,
-} from "./validation";
+import { normalizeUsername, validateUsernameFormat } from "./validation";
+import { validateLeetCodeUsername } from "@/lib/integrations/leetcode";
 
 export interface AddMemberInput {
   groupId: number;

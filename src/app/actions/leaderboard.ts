@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkActionRateLimit } from "@/lib/rate-limit";
+import { snapshotDataSchema, topGainersSchema } from "@/lib/schema/leaderboard"
+import { Prisma } from "@/generated/prisma/client";
 
 interface LeetCodeStats {
   username: string;
@@ -483,30 +485,28 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
   }
 }
 
+
 export async function saveLeaderboardSnapshot(groupId: number) {
-  const rateLimited = await checkActionRateLimit('saveSnapshot');
+  const rateLimited = await checkActionRateLimit("saveSnapshot");
   if (rateLimited) return rateLimited;
 
   const session = await auth();
-  
+
   if (!session?.user?.email) {
-    return { success: false, error: 'Unauthorized. Please log in.' };
+    return { success: false, error: "Unauthorized. Please log in." };
   }
 
   try {
-    // Find the user
+    // Find user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
 
     if (!user) {
-      return { success: false, error: 'User not found' };
+      return { success: false, error: "User not found" };
     }
 
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-
-    // Check member count - require minimum 5 members
+    // Get group + member count
     const group = await prisma.group.findUnique({
       where: { id: groupId },
       include: {
@@ -517,30 +517,50 @@ export async function saveLeaderboardSnapshot(groupId: number) {
     });
 
     if (!group) {
-      return { success: false, error: 'Group not found' };
+      return { success: false, error: "Group not found" };
     }
 
-    // OWNERSHIP CHECK: Only allow access if user is the owner
+    // Ownership check
     if (group.ownerId !== user.id) {
-      return { success: false, error: 'Access denied. You can only save snapshots for groups you own.' };
-    }
-
-    if (group._count.members < 5) {
-      return { 
-        success: false, 
-        error: 'Cannot save snapshot: Group must have at least 5 members to create leaderboard snapshots' 
+      return {
+        success: false,
+        error: "Access denied. You can only save snapshots for groups you own.",
       };
     }
 
-    // Get the current leaderboard data
+    // Require minimum members
+    if (group._count.members < 5) {
+      return {
+        success: false,
+        error:
+          "Cannot save snapshot: Group must have at least 5 members to create leaderboard snapshots",
+      };
+    }
+
+    // Get current leaderboard + gainers
     const leaderboardResult = await getGroupLeaderboard(groupId);
     const gainersResult = await getGroupGainers(groupId, 7);
 
     if (!leaderboardResult.success || !leaderboardResult.data) {
-      return { success: false, error: 'Failed to get leaderboard data' };
+      return { success: false, error: "Failed to get leaderboard data" };
     }
 
-    // Upsert the snapshot for today
+    // ──────────────────────────────────────────────
+    // ZOD VALIDATION (CRITICAL HARDENING)
+    // ──────────────────────────────────────────────
+
+    const validatedSnapshot = snapshotDataSchema.parse(
+      leaderboardResult.data
+    );
+
+    const validatedGainers = topGainersSchema.parse(
+      gainersResult.success ? gainersResult.data : null
+    );
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    // Save snapshot (upsert)
     await prisma.leaderboardSnapshot.upsert({
       where: {
         groupId_date: {
@@ -549,27 +569,45 @@ export async function saveLeaderboardSnapshot(groupId: number) {
         },
       },
       update: {
-        snapshotData: JSON.parse(JSON.stringify(leaderboardResult.data)),
-        topGainers: gainersResult.success && gainersResult.data 
-          ? JSON.parse(JSON.stringify(gainersResult.data)) 
-          : null,
+        snapshotData: validatedSnapshot,
+        topGainers:
+  validatedGainers === null
+    ? Prisma.JsonNull
+    : validatedGainers,
       },
       create: {
         groupId,
         date: today,
-        snapshotData: JSON.parse(JSON.stringify(leaderboardResult.data)),
-        topGainers: gainersResult.success && gainersResult.data 
-          ? JSON.parse(JSON.stringify(gainersResult.data)) 
-          : null,
+        snapshotData: validatedSnapshot,
+         topGainers:
+  validatedGainers === null
+    ? Prisma.JsonNull
+    : validatedGainers,
       },
     });
 
     return { success: true };
   } catch (error) {
-    console.error('Error saving leaderboard snapshot:', error);
-    return { success: false, error: 'Failed to save snapshot' };
+    console.error("Error saving leaderboard snapshot:", error);
+
+    return {
+      success: false,
+      error: "Failed to save snapshot",
+    };
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 export async function getLeaderboardHistory(groupId: number, days: number = 30) {
   const session = await auth();
