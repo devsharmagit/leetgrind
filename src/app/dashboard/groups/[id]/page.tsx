@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/auth';
-import { getGroupDetails } from '@/app/actions/groups';
+import { getGroupDetails } from '@/app/actions/group/index';
 import { prisma } from '@/lib/prisma';
 import GroupDetailsClient from './group-details-client';
 import { Skeleton } from '@/components/ui/skeleton';

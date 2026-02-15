@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkActionRateLimit } from "@/lib/rate-limit";
+import { ActionResult } from "@/lib/types/action-result";
 
-export async function createGroup(name: string) {
+export async function createGroup(name: string): Promise<ActionResult<any>> {
   const rateLimited = await checkActionRateLimit("createGroup");
   if (rateLimited) return rateLimited;
 
@@ -39,6 +40,14 @@ export async function createGroup(name: string) {
         name: trimmedName,
         ownerId: user.id,
       },
+      include: {
+        owner: true,
+        members: {
+          include: {
+            leetcodeProfile: true,
+          },
+        },
+      },
     });
 
     revalidatePath("/dashboard");
@@ -49,7 +58,7 @@ export async function createGroup(name: string) {
   }
 }
 
-export async function deleteGroup(groupId: number) {
+export async function deleteGroup(groupId: number): Promise<ActionResult> {
   const rateLimited = await checkActionRateLimit("deleteGroup");
   if (rateLimited) return rateLimited;
 

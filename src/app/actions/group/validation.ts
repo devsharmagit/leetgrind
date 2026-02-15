@@ -30,3 +30,40 @@ export function validateUsernameFormat(
 export function normalizeUsername(username: string): string {
   return username.trim().toLowerCase();
 }
+
+// Validate if a LeetCode username exists
+export async function validateLeetCodeUsername(username: string): Promise<{ valid: boolean; error?: string }> {
+  try {
+    const response = await fetch(`https://leetcode.com/graphql`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `
+          query userPublicProfile($username: String!) {
+            matchedUser(username: $username) {
+              username
+            }
+          }
+        `,
+        variables: { username },
+      }),
+    });
+
+    if (!response.ok) {
+      return { valid: false, error: 'Failed to verify username' };
+    }
+
+    const data = await response.json();
+    
+    if (data.data?.matchedUser?.username) {
+      return { valid: true };
+    }
+    
+    return { valid: false, error: `Username "${username}" not found on LeetCode` };
+  } catch (error) {
+    console.error('Error validating LeetCode username:', error);
+    return { valid: false, error: 'Failed to verify username' };
+  }
+}

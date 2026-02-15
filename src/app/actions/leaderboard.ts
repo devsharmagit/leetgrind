@@ -6,97 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { checkActionRateLimit } from "@/lib/rate-limit";
 import { snapshotDataSchema, topGainersSchema } from "@/lib/schema/leaderboard"
 import { Prisma } from "@/generated/prisma/client";
+import { ActionResult } from "@/lib/types/action-result";
+import { fetchLeetCodeStats, type LeetCodeStats } from "@/lib/batch-fetch";
 
-interface LeetCodeStats {
-  username: string;
-  realName: string | null;
-  ranking: number;
-  totalSolved: number;
-  easySolved: number;
-  mediumSolved: number;
-  hardSolved: number;
-  contestRating: number;
-}
+export { fetchLeetCodeStats, type LeetCodeStats };
 
-// GraphQL query to fetch user stats from LeetCode
-const LEETCODE_STATS_QUERY = `
-  query userPublicProfile($username: String!) {
-    matchedUser(username: $username) {
-      username
-      profile {
-        realName
-        ranking
-      }
-      submitStatsGlobal {
-        acSubmissionNum {
-          difficulty
-          count
-        }
-      }
-    }
-    userContestRanking(username: $username) {
-      rating
-    }
-  }
-`;
-
-export async function fetchLeetCodeStats(username: string): Promise<LeetCodeStats | null> {
-  try {
-    const response = await fetch('https://leetcode.com/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: LEETCODE_STATS_QUERY,
-        variables: { username },
-      }),
-      next: { revalidate: 0 }, // Don't cache
-    });
-
-    if (!response.ok) {
-      console.error(`Failed to fetch stats for ${username}: ${response.status}`);
-      return null;
-    }
-
-    const data = await response.json();
-    
-    if (!data.data?.matchedUser) {
-      return null;
-    }
-
-    const user = data.data.matchedUser;
-    const submissions = user.submitStatsGlobal?.acSubmissionNum || [];
-    
-    let easySolved = 0;
-    let mediumSolved = 0;
-    let hardSolved = 0;
-    let totalSolved = 0;
-
-    for (const sub of submissions) {
-      if (sub.difficulty === 'Easy') easySolved = sub.count;
-      else if (sub.difficulty === 'Medium') mediumSolved = sub.count;
-      else if (sub.difficulty === 'Hard') hardSolved = sub.count;
-      else if (sub.difficulty === 'All') totalSolved = sub.count;
-    }
-
-    return {
-      username: user.username,
-      realName: user.profile?.realName || null,
-      ranking: user.profile?.ranking || 5000000,
-      totalSolved,
-      easySolved,
-      mediumSolved,
-      hardSolved,
-      contestRating: Math.round(data.data.userContestRanking?.rating || 0),
-    };
-  } catch (error) {
-    console.error(`Error fetching stats for ${username}:`, error);
-    return null;
-  }
-}
-
-export async function refreshGroupStats(groupId: number) {
+export async function refreshGroupStats(groupId: number): Promise<ActionResult<any>> {
   const rateLimited = await checkActionRateLimit('refreshStats');
   if (rateLimited) return rateLimited;
 
@@ -235,7 +150,7 @@ export async function refreshGroupStats(groupId: number) {
   }
 }
 
-export async function getGroupLeaderboard(groupId: number) {
+export async function getGroupLeaderboard(groupId: number): Promise<ActionResult<any>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -347,7 +262,7 @@ export async function getGroupLeaderboard(groupId: number) {
   }
 }
 
-export async function getGroupGainers(groupId: number, days: number = 7) {
+export async function getGroupGainers(groupId: number, days: number = 7): Promise<ActionResult<any>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -486,7 +401,7 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
 }
 
 
-export async function saveLeaderboardSnapshot(groupId: number) {
+export async function saveLeaderboardSnapshot(groupId: number): Promise<ActionResult> {
   const rateLimited = await checkActionRateLimit("saveSnapshot");
   if (rateLimited) return rateLimited;
 
@@ -609,7 +524,7 @@ export async function saveLeaderboardSnapshot(groupId: number) {
 
 
 
-export async function getLeaderboardHistory(groupId: number, days: number = 30) {
+export async function getLeaderboardHistory(groupId: number, days: number = 30): Promise<ActionResult<any>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -662,7 +577,7 @@ export async function getLeaderboardHistory(groupId: number, days: number = 30) 
   }
 }
 
-export async function getProfileHistory(username: string, days: number = 30) {
+export async function getProfileHistory(username: string, days: number = 30): Promise<ActionResult<any>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -695,7 +610,7 @@ export async function getProfileHistory(username: string, days: number = 30) {
 // Public (no-auth) leaderboard actions
 // ──────────────────────────────────────────────
 
-export async function getPublicLeaderboard(publicId: string) {
+export async function getPublicLeaderboard(publicId: string): Promise<ActionResult<any>> {
   try {
     const group = await prisma.group.findUnique({
       where: { publicId },
@@ -790,7 +705,7 @@ export async function getPublicLeaderboard(publicId: string) {
   }
 }
 
-export async function getPublicGainers(publicId: string, days: number = 7) {
+export async function getPublicGainers(publicId: string, days: number = 7): Promise<ActionResult<any>> {
   try {
     const group = await prisma.group.findUnique({
       where: { publicId },
