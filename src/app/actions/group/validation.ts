@@ -1,5 +1,3 @@
-// src/app/actions/groups/validation.ts
-
 export function validateUsernameFormat(
   username: string
 ): { valid: boolean; error?: string } {
@@ -15,24 +13,28 @@ export function validateUsernameFormat(
     return { valid: false, error: "Username too long (max 30 characters)" };
   }
 
-  const validPattern = /^[a-zA-Z0-9_]+$/;
+  // ✅ FIX: Allow hyphens in addition to letters, numbers, and underscores
+  const validPattern = /^[a-zA-Z0-9_-]+$/;
   if (!validPattern.test(username)) {
     return {
       valid: false,
       error:
-        "Username contains invalid characters (only letters, numbers, _ allowed)",
+        "Username contains invalid characters (only letters, numbers, _, - allowed)",
     };
   }
 
   return { valid: true };
 }
 
+// ✅ FIX: Only trim whitespace, preserve case
 export function normalizeUsername(username: string): string {
-  return username.trim().toLowerCase();
+  return username.trim();
 }
 
-// Validate if a LeetCode username exists
-export async function validateLeetCodeUsername(username: string): Promise<{ valid: boolean; error?: string }> {
+// ✅ FIX: Validate and return the canonical username from LeetCode
+export async function validateLeetCodeUsername(
+  username: string
+): Promise<{ valid: boolean; error?: string; canonicalUsername?: string }> {
   try {
     const response = await fetch(`https://leetcode.com/graphql`, {
       method: 'POST',
@@ -58,7 +60,11 @@ export async function validateLeetCodeUsername(username: string): Promise<{ vali
     const data = await response.json();
     
     if (data.data?.matchedUser?.username) {
-      return { valid: true };
+      // ✅ Return the canonical username from LeetCode
+      return { 
+        valid: true, 
+        canonicalUsername: data.data.matchedUser.username 
+      };
     }
     
     return { valid: false, error: `Username "${username}" not found on LeetCode` };

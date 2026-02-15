@@ -63,12 +63,12 @@ export default function BulkAddMembers({ groupId, existingUsernames }: BulkAddMe
       return;
     }
 
-    if (response.results) {
-      setResults(response.results);
+    if (response.data) {
+      setResults(response.data);
 
-      const successCount = response.results.filter((r) => r.status === 'success').length;
-      const skipCount = response.results.filter((r) => r.status === 'skipped').length;
-      const errorCount = response.results.filter((r) => r.status === 'error').length;
+      const successCount = response.data.filter((r: AddResult) => r.status === 'success').length;
+      const skipCount = response.data.filter((r: AddResult) => r.status === 'skipped').length;
+      const errorCount = response.data.filter((r: AddResult) => r.status === 'error').length;
 
       if (successCount > 0) {
         toast.success(`Added ${successCount} member${successCount > 1 ? 's' : ''}`);

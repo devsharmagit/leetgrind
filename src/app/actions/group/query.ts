@@ -1,11 +1,55 @@
-// src/app/actions/group/query.ts
 "use server";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ActionResult } from "@/lib/types/action-result";
+import type { Group, User, GroupMember, LeetcodeProfile, DailyStat } from "@/generated/prisma/client";
 
-export async function getGroups(): Promise<ActionResult<any[]>> {
+// Complex group type with all relations for getGroups
+type GroupWithRelationsAndCount = Group & {
+  owner: User;
+  members: (GroupMember & {
+    leetcodeProfile: LeetcodeProfile;
+  })[];
+  _count: {
+    members: number;
+  };
+};
+
+// Group with member stats for getGroupDetails  
+type GroupWithStats = Group & {
+  owner: User;
+  members: (GroupMember & {
+    leetcodeProfile: LeetcodeProfile & {
+      stats: DailyStat[];
+    };
+  })[];
+  _count: {
+    members: number;
+  };
+};
+
+// Public group data (no internal IDs)
+type PublicGroupData = {
+  publicId: string;
+  name: string;
+  visibility: string;
+  owner: {
+    name: string;
+  };
+  members: {
+    leetcodeProfile: {
+      username: string;
+      stats: DailyStat[];
+    };
+  }[];
+  _count: {
+    members: number;
+  };
+  createdAt: Date;
+};
+
+export async function getGroups(): Promise<ActionResult<GroupWithRelationsAndCount[], { currentUserId: number | null }>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -49,7 +93,7 @@ export async function getGroups(): Promise<ActionResult<any[]>> {
   }
 }
 
-export async function getGroupDetails(groupId: number): Promise<ActionResult<any>> {
+export async function getGroupDetails(groupId: number): Promise<ActionResult<GroupWithStats, { currentUserId: number }>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -103,7 +147,7 @@ export async function getGroupDetails(groupId: number): Promise<ActionResult<any
   }
 }
 
-export async function getGroupDetailsByPublicId(publicId: string): Promise<ActionResult<any>> {
+export async function getGroupDetailsByPublicId(publicId: string): Promise<ActionResult<PublicGroupData>> {
   try {
     const group = await prisma.group.findUnique({
       where: { publicId },

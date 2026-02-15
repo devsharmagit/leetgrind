@@ -1,4 +1,3 @@
-// src/app/actions/groups/members.ts
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -14,21 +13,28 @@ export interface AddMemberInput {
 }
 
 export async function addMemberToGroup(input: AddMemberInput): Promise<ActionResult> {
-  const rateLimited = await checkActionRateLimit("addMember");
+  const session = await auth();
+  const rateLimited = await checkActionRateLimit("addMember", session);
   if (rateLimited) return rateLimited;
 
-  const session = await auth();
   if (!session?.user?.email)
     return { success: false, error: "Unauthorized." };
 
   try {
+    // Normalize username (trim only, preserve case)
     const username = normalizeUsername(input.leetcodeUsername);
+    
+    // Validate format
     const fmt = validateUsernameFormat(username);
     if (!fmt.valid) return { success: false, error: fmt.error || 'Invalid format' };
 
+    // Validate with LeetCode and get canonical username
     const validation = await validateLeetCodeUsername(username);
     if (!validation.valid)
       return { success: false, error: validation.error || 'Validation failed' };
+
+    // ✅ Use canonical username from LeetCode
+    const canonicalUsername = validation.canonicalUsername!;
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -42,13 +48,14 @@ export async function addMemberToGroup(input: AddMemberInput): Promise<ActionRes
     if (group.ownerId !== user.id)
       return { success: false, error: "Unauthorized" };
 
+    // ✅ Find or create profile with canonical username
     let profile = await prisma.leetcodeProfile.findUnique({
-      where: { username },
+      where: { username: canonicalUsername },
     });
 
     if (!profile) {
       profile = await prisma.leetcodeProfile.create({
-        data: { username },
+        data: { username: canonicalUsername },
       });
     }
 
@@ -72,6 +79,9 @@ export async function removeMemberFromGroup(
   leetcodeProfileId: number
 ): Promise<ActionResult> {
   const session = await auth();
+  const rateLimited = await checkActionRateLimit("removeMemberFromGroup", session);
+  if (rateLimited) return rateLimited;
+  
   if (!session?.user?.email)
     return { success: false, error: "Unauthorized." };
 
@@ -145,8 +155,8 @@ export async function addSingleMemberToGroup(
       };
     }
 
-    // Check if already in group
-    if (existingUsernames.map(u => u.toLowerCase()).includes(username)) {
+    // ✅ Check if already in group (case-insensitive for comparison)
+    if (existingUsernames.map(u => u.toLowerCase()).includes(username.toLowerCase())) {
       return {
         success: true,
         username,
@@ -192,7 +202,7 @@ export async function addSingleMemberToGroup(
       };
     }
 
-    // Validate LeetCode username exists
+    // Validate LeetCode username exists and get canonical form
     const validation = await validateLeetCodeUsername(username);
     
     if (!validation.valid) {
@@ -204,14 +214,17 @@ export async function addSingleMemberToGroup(
       };
     }
 
-    // Find or create the LeetCode profile
+    // ✅ Use canonical username from LeetCode
+    const canonicalUsername = validation.canonicalUsername!;
+
+    // Find or create the LeetCode profile with canonical username
     let leetcodeProfile = await prisma.leetcodeProfile.findUnique({
-      where: { username },
+      where: { username: canonicalUsername },
     });
 
     if (!leetcodeProfile) {
       leetcodeProfile = await prisma.leetcodeProfile.create({
-        data: { username },
+        data: { username: canonicalUsername },
       });
     }
 
@@ -228,7 +241,7 @@ export async function addSingleMemberToGroup(
     
     return {
       success: true,
-      username,
+      username: canonicalUsername, // ✅ Return canonical username
       status: 'success' as const,
       message: 'Added successfully'
     };
@@ -243,12 +256,17 @@ export async function addSingleMemberToGroup(
   }
 }
 
-export async function addMembersToGroup(groupId: number, usernames: string[]): Promise<ActionResult<any>> {
-  const rateLimited = await checkActionRateLimit('addMembers');
+export type AddMemberResult = {
+  username: string;
+  status: 'success' | 'error' | 'skipped';
+  message: string;
+};
+
+export async function addMembersToGroup(groupId: number, usernames: string[]): Promise<ActionResult<AddMemberResult[]>> {
+  const session = await auth();
+  const rateLimited = await checkActionRateLimit('addMembers', session);
   if (rateLimited) return rateLimited;
 
-  // --- 1. Auth + ownership check (ONCE) ---
-  const session = await auth();
   if (!session?.user?.email) {
     return { success: false, error: 'Unauthorized. Please log in.' };
   }
@@ -270,7 +288,7 @@ export async function addMembersToGroup(groupId: number, usernames: string[]): P
       return { success: false, error: 'You can only add members to groups you own.' };
     }
 
-    // --- 2. Build existing set + dedupe/validate locally (instant, no DB) ---
+    // ✅ Build existing set (case-insensitive for comparison)
     const existingSet = new Set(
       group.members.map((m) => m.leetcodeProfile.username.toLowerCase())
     );
@@ -289,12 +307,16 @@ export async function addMembersToGroup(groupId: number, usernames: string[]): P
         results.push({ username: raw, status: 'error', message: fmt.error || 'Invalid format' });
         continue;
       }
-      if (existingSet.has(username)) {
+      
+      // ✅ Case-insensitive duplicate check
+      if (existingSet.has(username.toLowerCase())) {
         results.push({ username, status: 'skipped', message: 'Already in group' });
         continue;
       }
-      // Prevent processing duplicate entries within the same batch
-      if (indexMap.has(username)) {
+      
+      // Prevent processing duplicate entries within the same batch (case-insensitive)
+      const lowerUsername = username.toLowerCase();
+      if (Array.from(indexMap.keys()).some(k => k.toLowerCase() === lowerUsername)) {
         results.push({ username, status: 'skipped', message: 'Duplicate in batch' });
         continue;
       }
@@ -306,7 +328,7 @@ export async function addMembersToGroup(groupId: number, usernames: string[]): P
 
     // --- 3. Validate LeetCode usernames in parallel batches of 5 ---
     const BATCH_SIZE = 5;
-    const validUsernames: string[] = [];
+    const validationResults: Array<{ inputUsername: string; canonicalUsername: string }> = [];
 
     for (let i = 0; i < toValidate.length; i += BATCH_SIZE) {
       const batch = toValidate.slice(i, i + BATCH_SIZE);
@@ -314,19 +336,37 @@ export async function addMembersToGroup(groupId: number, usernames: string[]): P
         batch.map(async (username) => {
           try {
             const v = await validateLeetCodeUsername(username);
-            return { username, valid: v.valid, error: v.error };
+            return { 
+              inputUsername: username, 
+              valid: v.valid, 
+              error: v.error,
+              canonicalUsername: v.canonicalUsername 
+            };
           } catch {
-            return { username, valid: false, error: 'Validation failed' };
+            return { 
+              inputUsername: username, 
+              valid: false, 
+              error: 'Validation failed',
+              canonicalUsername: undefined
+            };
           }
         })
       );
 
       for (const v of validations) {
-        const idx = indexMap.get(v.username)!;
-        if (v.valid) {
-          validUsernames.push(v.username);
+        const idx = indexMap.get(v.inputUsername)!;
+        if (v.valid && v.canonicalUsername) {
+          // ✅ Store mapping of input -> canonical
+          validationResults.push({ 
+            inputUsername: v.inputUsername, 
+            canonicalUsername: v.canonicalUsername 
+          });
         } else {
-          results[idx] = { username: v.username, status: 'error', message: v.error || 'Not found on LeetCode' };
+          results[idx] = { 
+            username: v.inputUsername, 
+            status: 'error', 
+            message: v.error || 'Not found on LeetCode' 
+          };
         }
       }
 
@@ -336,16 +376,18 @@ export async function addMembersToGroup(groupId: number, usernames: string[]): P
       }
     }
 
-    // --- 4. Batch DB: find existing profiles in one query ---
-    if (validUsernames.length > 0) {
+    // --- 4. Batch DB: find existing profiles in one query (using canonical usernames) ---
+    if (validationResults.length > 0) {
+      const canonicalUsernames = validationResults.map(v => v.canonicalUsername);
+      
       const existingProfiles = await prisma.leetcodeProfile.findMany({
-        where: { username: { in: validUsernames } },
+        where: { username: { in: canonicalUsernames } },
         select: { id: true, username: true },
       });
       const profileMap = new Map(existingProfiles.map(p => [p.username, p.id]));
 
-      // Create missing profiles
-      const missingUsernames = validUsernames.filter(u => !profileMap.has(u));
+      // Create missing profiles (using canonical usernames)
+      const missingUsernames = canonicalUsernames.filter(u => !profileMap.has(u));
       if (missingUsernames.length > 0) {
         await prisma.leetcodeProfile.createMany({
           data: missingUsernames.map(u => ({ username: u })),
@@ -362,7 +404,7 @@ export async function addMembersToGroup(groupId: number, usernames: string[]): P
       }
 
       // --- 5. Batch DB: add all group members at once ---
-      const memberData = validUsernames
+      const memberData = canonicalUsernames
         .filter(u => profileMap.has(u))
         .map(u => ({ groupId, leetcodeProfileId: profileMap.get(u)! }));
 
@@ -373,11 +415,15 @@ export async function addMembersToGroup(groupId: number, usernames: string[]): P
         });
       }
 
-      // Mark all valid usernames as success
-      for (const username of validUsernames) {
-        const idx = indexMap.get(username);
-        if (idx !== undefined && profileMap.has(username)) {
-          results[idx] = { username, status: 'success', message: 'Added successfully' };
+      // Mark all valid usernames as success (map back to input usernames for results)
+      for (const { inputUsername, canonicalUsername } of validationResults) {
+        const idx = indexMap.get(inputUsername);
+        if (idx !== undefined && profileMap.has(canonicalUsername)) {
+          results[idx] = { 
+            username: canonicalUsername, // ✅ Show canonical username in results
+            status: 'success', 
+            message: 'Added successfully' 
+          };
         }
       }
     }
@@ -386,10 +432,9 @@ export async function addMembersToGroup(groupId: number, usernames: string[]): P
     revalidatePath(`/dashboard/groups/${groupId}`);
     revalidatePath('/dashboard');
 
-    return { success: true, results };
+    return { success: true, data: results };
   } catch (error) {
     console.error('Error adding members:', error);
     return { success: false, error: 'Failed to add members' };
   }
 }
-

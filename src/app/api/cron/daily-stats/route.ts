@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { batchFetchStats, LeetCodeStats } from '@/lib/batch-fetch';
+import { calculateRankingPoints } from '@/lib/scoring';
+import { sortLeaderboard } from '@/lib/leaderboard-sort';
+import { snapshotDataSchema, topGainersSchema } from '@/lib/schema/leaderboard';
+import { Prisma } from '@/generated/prisma/client';
+import { z } from 'zod';
 
 // ============================================================================
 // AUTHENTICATION HANDLERS
 // ============================================================================
-
+// for vercel
 export async function GET(request: NextRequest) {
-  // GET is reserved for Vercel Cron only
-  if (request.headers.get('x-vercel-cron') !== '1') {
-    return NextResponse.json(
-      { error: 'GET is only allowed from Vercel Cron. Use POST with Authorization header.' },
-      { status: 405 }
-    );
-  }
-
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
     console.error('[CRON] CRON_SECRET environment variable is required but not set');
@@ -24,10 +21,24 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  console.log('[CRON] Request authenticated via Vercel Cron header');
+  // ✅ SECURITY FIX: Validate Authorization header, not x-vercel-cron
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    console.warn('[CRON] Unauthorized GET attempt', {
+      hasAuthHeader: !!authHeader,
+      hasVercelCronHeader: request.headers.get('x-vercel-cron') === '1',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+    });
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
+  console.log('[CRON] Request authenticated via Bearer token');
   return handleDailyStats();
 }
-
+// for manual testing
 export async function POST(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
@@ -210,13 +221,7 @@ async function saveStatsToDatabase(
 
     try {
       // Calculate ranking points
-      const rankingPoints = Math.max(0, 
-        stats.totalSolved * 10 + 
-        stats.easySolved * 1 + 
-        stats.mediumSolved * 3 + 
-        stats.hardSolved * 5 +
-        Math.max(0, 5000000 - stats.ranking) / 1000
-      );
+      const rankingPoints = calculateRankingPoints(stats)
       
       // Upsert daily stat (idempotent operation)
       await prisma.dailyStat.upsert({
@@ -341,11 +346,11 @@ async function createGroupSnapshot(groupId: number, date: Date): Promise<void> {
       hardSolved: latestStat?.hardSolved ?? 0,
       contestRating: latestStat?.contestRating ?? 0,
       rankingPoints: latestStat?.rankingPoints ?? 0,
+      lastUpdated: latestStat?.date ?? null,
     };
   });
   
-  // Sort by ranking (lower is better)
-  leaderboard.sort((a, b) => a.ranking - b.ranking);
+ sortLeaderboard(leaderboard)
   
   // Calculate top gainers (7 days)
   const pastDate = new Date(date);
@@ -387,23 +392,44 @@ async function createGroupSnapshot(groupId: number, date: Date): Promise<void> {
     .filter((g): g is NonNullable<typeof g> => g !== null)
     .sort((a, b) => b.problemsGained - a.problemsGained);
   
-  // Upsert snapshot (idempotent)
-  await prisma.leaderboardSnapshot.upsert({
-    where: {
-      groupId_date: {
+  // ✅ FIX #2: Validate data with Zod schemas (same as saveLeaderboardSnapshot action)
+  try {
+    const validatedSnapshot = snapshotDataSchema.parse(leaderboard);
+    const validatedGainers = topGainersSchema.parse(
+      gainers.length > 0 ? gainers : null
+    );
+    
+    // Upsert snapshot with validated data (idempotent)
+    await prisma.leaderboardSnapshot.upsert({
+      where: {
+        groupId_date: {
+          groupId,
+          date,
+        },
+      },
+      update: {
+        snapshotData: validatedSnapshot,
+        topGainers: validatedGainers === null ? Prisma.JsonNull : validatedGainers,
+      },
+      create: {
         groupId,
         date,
+        snapshotData: validatedSnapshot,
+        topGainers: validatedGainers === null ? Prisma.JsonNull : validatedGainers,
       },
-    },
-    update: {
-      snapshotData: JSON.parse(JSON.stringify(leaderboard)),
-      topGainers: JSON.parse(JSON.stringify(gainers)),
-    },
-    create: {
-      groupId,
-      date,
-      snapshotData: JSON.parse(JSON.stringify(leaderboard)),
-      topGainers: JSON.parse(JSON.stringify(gainers)),
-    },
-  });
+    });
+    
+    console.log(`[CRON] Snapshot created for group ${groupId} with ${leaderboard.length} members`);
+  } catch (error) {
+    // Provide detailed error information for debugging
+    console.error(`[CRON] Validation failed for group ${groupId}:`, error);
+    if (error instanceof z.ZodError) {
+      console.error('[CRON] Validation errors:', error.message);
+    }
+    throw new Error(
+      `Snapshot validation failed for group ${groupId}: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`
+    );
+  }
 }

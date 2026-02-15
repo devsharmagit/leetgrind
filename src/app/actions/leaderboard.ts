@@ -8,14 +8,54 @@ import { snapshotDataSchema, topGainersSchema } from "@/lib/schema/leaderboard"
 import { Prisma } from "@/generated/prisma/client";
 import { ActionResult } from "@/lib/types/action-result";
 import { fetchLeetCodeStats, type LeetCodeStats } from "@/lib/batch-fetch";
+import { calculateRankingPoints } from "@/lib/scoring";
+import { sortLeaderboard } from "@/lib/leaderboard-sort";
+import type { LeaderboardSnapshot, LeetcodeProfile, DailyStat } from "@/generated/prisma/client";
 
 export { fetchLeetCodeStats, type LeetCodeStats };
 
-export async function refreshGroupStats(groupId: number): Promise<ActionResult<any>> {
-  const rateLimited = await checkActionRateLimit('refreshStats');
-  if (rateLimited) return rateLimited;
+// Return types for leaderboard functions
+export type LeaderboardEntry = {
+  username: string;
+  ranking: number;
+  totalSolved: number;
+  easySolved: number;
+  mediumSolved: number;
+  hardSolved: number;
+  contestRating: number;
+  rankingPoints: number;
+  lastUpdated: Date | null;
+};
 
+export type GainerEntry = {
+  username: string;
+  problemsGained: number;
+  rankImproved: number;
+  currentSolved: number;
+  currentRank: number;
+};
+
+export type RefreshStatsResult = {
+  username: string;
+  status: 'success' | 'error';
+  message: string;
+};
+
+type ProfileWithStats = LeetcodeProfile & {
+  stats: DailyStat[];
+};
+
+type PublicLeaderboardMeta = {
+  groupName: string;
+  ownerName: string;
+  memberCount: number;
+  lastSnapshotDate: Date | null;
+};
+
+export async function refreshGroupStats(groupId: number): Promise<ActionResult<RefreshStatsResult[], { message: string }>> {
   const session = await auth();
+  const rateLimited = await checkActionRateLimit('refreshStats', session);
+  if (rateLimited) return rateLimited;
   
   if (!session?.user?.email) {
     return { success: false, error: 'Unauthorized. Please log in.' };
@@ -79,13 +119,7 @@ export async function refreshGroupStats(groupId: number): Promise<ActionResult<a
 
         // Calculate ranking points (custom scoring)
         // Higher solved = more points, lower rank = more points
-        const rankingPoints = Math.max(0, 
-          stats.totalSolved * 10 + 
-          stats.easySolved * 1 + 
-          stats.mediumSolved * 3 + 
-          stats.hardSolved * 5 +
-          Math.max(0, 5000000 - stats.ranking) / 1000
-        );
+        const rankingPoints = calculateRankingPoints(stats)
 
         // Upsert daily stat
         await prisma.dailyStat.upsert({
@@ -141,7 +175,7 @@ export async function refreshGroupStats(groupId: number): Promise<ActionResult<a
     
     return { 
       success: true, 
-      results,
+      data: results,
       message: `Updated ${successCount} of ${group.members.length} members`,
     };
   } catch (error) {
@@ -150,7 +184,7 @@ export async function refreshGroupStats(groupId: number): Promise<ActionResult<a
   }
 }
 
-export async function getGroupLeaderboard(groupId: number): Promise<ActionResult<any>> {
+export async function getGroupLeaderboard(groupId: number): Promise<ActionResult<LeaderboardEntry[], { lastSnapshotDate: Date | null }>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -235,21 +269,7 @@ export async function getGroupLeaderboard(groupId: number): Promise<ActionResult
       };
     });
 
-    // Sort by rankingPoints (descending - higher is better)
-    // Tie-breaker 1: ranking (ascending - lower is better)
-    // Tie-breaker 2: username (alphabetical for stability)
-    leaderboard.sort((a, b) => {
-      // Primary: rankingPoints (descending)
-      if (b.rankingPoints !== a.rankingPoints) {
-        return b.rankingPoints - a.rankingPoints;
-      }
-      // Tie-breaker 1: ranking (ascending)
-      if (a.ranking !== b.ranking) {
-        return a.ranking - b.ranking;
-      }
-      // Tie-breaker 2: username (alphabetical)
-      return a.username.localeCompare(b.username);
-    });
+    sortLeaderboard(leaderboard);
 
     return { 
       success: true, 
@@ -262,7 +282,7 @@ export async function getGroupLeaderboard(groupId: number): Promise<ActionResult
   }
 }
 
-export async function getGroupGainers(groupId: number, days: number = 7): Promise<ActionResult<any>> {
+export async function getGroupGainers(groupId: number, days: number = 7): Promise<ActionResult<GainerEntry[], { allMembers: GainerEntry[] }>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -393,7 +413,11 @@ export async function getGroupGainers(groupId: number, days: number = 7): Promis
     // Filter to only those who gained
     const activeGainers = gainers.filter(g => g.problemsGained > 0);
 
-    return { success: true, data: activeGainers, allMembers: gainers };
+    return { 
+      success: true, 
+      data: activeGainers,
+      allMembers: gainers,
+    };
   } catch (error) {
     console.error('Error getting gainers:', error);
     return { success: false, error: 'Failed to get gainers' };
@@ -402,10 +426,9 @@ export async function getGroupGainers(groupId: number, days: number = 7): Promis
 
 
 export async function saveLeaderboardSnapshot(groupId: number): Promise<ActionResult> {
-  const rateLimited = await checkActionRateLimit("saveSnapshot");
-  if (rateLimited) return rateLimited;
-
   const session = await auth();
+  const rateLimited = await checkActionRateLimit("saveSnapshot", session);
+  if (rateLimited) return rateLimited;
 
   if (!session?.user?.email) {
     return { success: false, error: "Unauthorized. Please log in." };
@@ -512,19 +535,7 @@ export async function saveLeaderboardSnapshot(groupId: number): Promise<ActionRe
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-export async function getLeaderboardHistory(groupId: number, days: number = 30): Promise<ActionResult<any>> {
+export async function getLeaderboardHistory(groupId: number, days: number = 30): Promise<ActionResult<LeaderboardSnapshot[]>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -577,7 +588,7 @@ export async function getLeaderboardHistory(groupId: number, days: number = 30):
   }
 }
 
-export async function getProfileHistory(username: string, days: number = 30): Promise<ActionResult<any>> {
+export async function getProfileHistory(username: string, days: number = 30): Promise<ActionResult<ProfileWithStats>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -585,8 +596,26 @@ export async function getProfileHistory(username: string, days: number = 30): Pr
   }
 
   try {
-    const profile = await prisma.leetcodeProfile.findUnique({
-      where: { username },
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    // Check if profile exists and user has access in one query
+    const profile = await prisma.leetcodeProfile.findFirst({
+      where: {
+        username,
+        groups: {
+          some: {
+            group: {
+              ownerId: user.id,
+            },
+          },
+        },
+      },
       include: {
         stats: {
           orderBy: { date: 'desc' },
@@ -596,7 +625,10 @@ export async function getProfileHistory(username: string, days: number = 30): Pr
     });
 
     if (!profile) {
-      return { success: false, error: 'Profile not found' };
+      return { 
+        success: false, 
+        error: 'Profile not found or you do not have access to it.' 
+      };
     }
 
     return { success: true, data: profile };
@@ -610,7 +642,7 @@ export async function getProfileHistory(username: string, days: number = 30): Pr
 // Public (no-auth) leaderboard actions
 // ──────────────────────────────────────────────
 
-export async function getPublicLeaderboard(publicId: string): Promise<ActionResult<any>> {
+export async function getPublicLeaderboard(publicId: string): Promise<ActionResult<LeaderboardEntry[], PublicLeaderboardMeta>> {
   try {
     const group = await prisma.group.findUnique({
       where: { publicId },
@@ -705,7 +737,7 @@ export async function getPublicLeaderboard(publicId: string): Promise<ActionResu
   }
 }
 
-export async function getPublicGainers(publicId: string, days: number = 7): Promise<ActionResult<any>> {
+export async function getPublicGainers(publicId: string, days: number = 7): Promise<ActionResult<GainerEntry[]>> {
   try {
     const group = await prisma.group.findUnique({
       where: { publicId },
