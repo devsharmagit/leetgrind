@@ -1,412 +1,252 @@
-# 🚀 LeetCode Group Tracker
+<div align="center">
 
-A web application to **track, rank, and analyze LeetCode progress of a group**.  
-The app automatically collects daily stats, stores historical snapshots, and generates insights like leaderboards, inactive users, and biggest gainers.
+# 🎯 LeetGrind
 
----
+**Competitive LeetCode Progress Tracking for Teams**
 
-## ✨ Features
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?style=flat&logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-- 📊 **Leaderboard** (rank & problems solved)
-- 😥 **Zero-Solved Detection**
-- 💤 **Inactive Members** (last N days)
-- 🚀 **Biggest Gainers** (rank & problems solved)
-- 🏆 **Most Impressive Profile**
-- 📅 **Historical Tracking via Snapshots**
-- 🔄 **Automated Daily Updates** (Vercel Cron)
-- 📤 **Export-ready summaries** (WhatsApp / CSV / Screenshot)
-- 👥 **Group Management** (minimum 5 members for leaderboards)
-- 🔐 **Authentication** (Google OAuth via NextAuth)
+[Features](#features) • [Architecture](#architecture) • [Tech Stack](#tech-stack) • [Setup](#setup) • [Deployment](#deployment)
+
+</div>
 
 ---
 
-## 🤖 Automated Stats Collection
+## What is LeetGrind?
 
-The app uses **Vercel Cron Jobs** to automatically fetch and update LeetCode stats daily.
+```mermaid
+flowchart TD
+    A[Vercel Cron<br/>00:00 UTC] -->|Trigger| B[API Route]
+    B --> C{Find Profiles<br/>Missing Stats}
+    C --> D[Batch Fetch<br/>LeetCode API]
+    D -->|5 concurrent<br/>1s delay| E[GraphQL Queries]
+    E --> F[Calculate<br/>Ranking Points]
+    F --> G[(PostgreSQL<br/>DailyStat)]
+    G --> H[Generate<br/>Snapshots]
+    H --> I[(JSON Blobs<br/>LeaderboardSnapshot)]
+```
 
-- **Schedule:** Every day at 00:00 UTC
-- **Endpoint:** `/api/cron/daily-stats`
-- **Features:**
-  - Batch processing with concurrency control
-  - Rate limiting protection
-  - Automatic snapshot generation
-  - Idempotent operations
+### Data Model
 
-📖 **[Full Cron Setup Guide →](./CRON_SETUP.md)**
+Immutable append-only architecture:
 
----
+```
+User (1:N) Group (1:N) GroupMember (N:1) LeetcodeProfile (1:N) DailyStat
+                                         Group (1:N) LeaderboardSnapshot
+```
 
-## 🧠 Core Concept
+**DailyStat** (never updated): Daily record per profile with problems solved, global rank, contest rating, computed points  
+**LeaderboardSnapshot** (JSON): Daily group standings when size ≥ 5
 
-Instead of storing only the current LeetCode stats, this app stores **daily immutable snapshots** for each user.
+### Key Components
 
-> 📌 Snapshots are never updated — a new snapshot is created every day.
+| Component | Implementation |
+|-----------|----------------|
+| **Auth** | NextAuth v5 (Google OAuth) |
+| **Cron Auth** | `x-vercel-cron` header (prod) / `Bearer ${CRON_SECRET}` (test) |
+| **Rate Limiting** | Upstash Redis sliding window (optional, disabled by default) |
+| **Batch Processing** | 5 concurrent requests, 1s inter-batch delay, 5s timeout |
+| **Scoring** | `(total×10) + (easy×1) + (med×3) + (hard×5) + max(0, 5M-rank)/1000` |
 
-This enables:
-- Progress comparison over time
-- Rank improvement tracking
-- Activity / inactivity detection
-- Time-range analytics
+Upstash Redis-backed sliding window rate limits:
+- Page routes: 60 req/60s
+- API routes: 30 req/60s
+- Server actions: 20 req/60s
+- Auth endpoints: 10 req/60s
 
----
+Disabled by default (`ENABLE_RATE_LIMIT=false`).
 
-## 🏗️ Tech Stack
+### Scoring Algorithm
+
+```typescript
+rankingPoints = (totalSolved * 10) 
+              + (easySolved * 1) 
+              + (mediumSolved * 3) 
+              + (hardSolved * 5) 
+              + max(0, 5000000 - globalRank) / 1000
+```
+
+Leaderboard sorted by:
+1. Ranking points (descending)
+2. Global rank (ascending, tiebreaker)
+3. Username (alphabetical, stability)
+
+## Technology Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js (App Router) |
-| Styling | Tailwind CSS + shadcn/ui |
-| Backend | Next.js API Routes |
-| Database | PostgreSQL |
-| ORM | Prisma |
-| Package Manager | **Bun** |
-| Cron Jobs | GitHub Actions / Vercel Cron |
-| Hosting | Vercel |
-| DB Hosting | Supabase / Neon |
-
----
-
-## 📂 Project Structure
-
-```
-leetcode-group-tracker/
-├── app/
-│   ├── page.tsx                # Dashboard
-│   ├── leaderboard/
-│   ├── inactive/
-│   ├── gainers/
-│   └── api/
-│       ├── users/
-│       ├── snapshots/
-│       ├── leaderboard/
-│       ├── inactive/
-│       └── gainers/
-├── lib/
-│   ├── leetcode.ts             # LeetCode fetch logic
-│   ├── scoring.ts              # Impressive profile scoring
-│   └── date.ts
-├── prisma/
-│   ├── schema.prisma
-│   └── migrations/
-├── scripts/
-│   └── collectSnapshots.ts     # Daily snapshot collector
-├── README.md
-└── .env
-```
-
----
-
-## 🧩 Database Models
-
-### User
-
-```ts
-User {
-  id
-  name
-  leetcodeUsername
-  createdAt
-}
-```
-
-### UserSnapshot
-
-```ts
-UserSnapshot {
-  id
-  userId
-  rank
-  problemsSolved
-  easySolved
-  mediumSolved
-  hardSolved
-  snapshotDate
-  createdAt
-}
-```
-
----
-
-## 🔄 Data Collection Flow
-
-1. Admin adds users (name + LeetCode username)
-2. Daily cron job runs
-3. For each user:
-   - Fetch LeetCode profile data
-   - Extract rank and problem stats
-   - Insert a new snapshot
-4. APIs compute analytics from snapshots
-
----
-
-## 📌 Business Logic Overview
-
-### 🏆 Leaderboard
-
-- Fetch latest snapshot per user
-- Sort by rank (ascending)
-
-### 😥 Zero Solved Users
-
-```ts
-latestSnapshot.problemsSolved === 0
-```
-
-### 💤 Inactive Users
-
-A user is considered inactive if there is no increase in solved problems in the last N days.
-
-```ts
-maxSolved(lastNDays) - minSolved(lastNDays) === 0
-```
-
-### 🚀 Biggest Gainers
-
-```ts
-solvedDelta = solved(today) - solved(fromDate)
-rankDelta   = rank(fromDate) - rank(today)
-```
-
-Sorted by:
-- `solvedDelta` (descending)
-- `rankDelta` (descending)
-
-### 🏆 Most Impressive Profile
-
-Example scoring formula:
-
-```ts
-score =
-  (1_000_000 / rank) * 0.5 +
-  problemsSolved * 1 +
-  hardSolved * 3
-```
-
----
-
-## 🔌 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/leaderboard` | Ranked leaderboard |
-| GET | `/api/inactive?days=30` | Inactive users |
-| GET | `/api/zero-solved` | Users with zero solved |
-| GET | `/api/gainers?from=YYYY-MM-DD` | Biggest gainers |
-| POST | `/api/users` | Add a new user |
-
----
-
-## ⏰ Automated Daily Updates
-
-The app uses **Vercel Cron Jobs** for automated stats collection:
-
-**🎉 On Vercel: Set `CRON_SECRET` and deploy!**
-
-The cron job runs daily at 00:00 UTC. Vercel authenticates via the `x-vercel-cron` header. `CRON_SECRET` must be set as an environment variable in all environments.
-
-**For Local Testing:**
-
-```bash
-# 1. Generate a cron secret (required)
-openssl rand -base64 32
-
-# 2. Add to .env.local
-CRON_SECRET="your-generated-secret"
-
-# 3. Test manually (POST request)
-curl -X POST http://localhost:3000/api/cron/daily-stats \
-  -H "Authorization: Bearer YOUR_CRON_SECRET"
-```
-
-**Schedule:** Every day at 00:00 UTC (configured in `vercel.json`)
-
-The cron job automatically:
-- ✅ Fetches latest LeetCode stats for all profiles
-- ✅ Updates daily statistics
-- ✅ Generates leaderboard snapshots (for groups with 5+ members)
-- ✅ Calculates top gainers
-
-**📖 [Complete Cron Setup Guide →](./CRON_SETUP.md)**
-
----
-
-## 🔌 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/cron/daily-stats` | Daily stats cron (Vercel Cron only, `x-vercel-cron` header) |
-| POST | `/api/cron/daily-stats` | Daily stats cron (Bearer token auth) |
-
----
-
-## 🛠️ Setup Instructions
-
-### Quick Setup (Recommended)
-
-Run the automated setup script:
-
-```bash
-./setup.sh
-```
-
-This will:
-- Start PostgreSQL in Docker
-- Generate Prisma client
-- Run database migrations
-
-Then follow the prompts to configure your Google OAuth credentials.
-
-### Manual Setup
-
-### 1️⃣ Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/leetcode-group-tracker
-cd leetcode-group-tracker
-```
-
-### 2️⃣ Install Dependencies
-
-```bash
-npm install
-```
-
-### 3️⃣ Start PostgreSQL Database
-
-Using Docker Compose:
-
-```bash
-docker-compose up -d
-```
-
-Or see [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed instructions.
-
-### 4️⃣ Configure Environment Variables
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-Update `.env` with your credentials:
-
-```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/leetgrind?schema=public"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-
-# Required: Secures the cron endpoint
-CRON_SECRET="your-cron-secret-here"
-```
-
-**Generate secrets:**
-```bash
-# For NEXTAUTH_SECRET (required)
-openssl rand -base64 32
-
-# For CRON_SECRET (required)
-openssl rand -base64 32
-```
-
-**Get Google OAuth credentials:** See [AUTH_SETUP.md](AUTH_SETUP.md) for detailed instructions.
-
-> **Note:** `CRON_SECRET` is **required** in all environments (including Vercel). On Vercel, the cron job authenticates automatically via the `x-vercel-cron` header, but the secret must still be set as an environment variable. Manual invocations use `POST` with a `Bearer` token.
-
-### 5️⃣ Setup Database
-
-Generate Prisma client and run migrations:
-
-```bash
-npx prisma generate
-npx prisma migrate dev --name init
-```
-
-### 6️⃣ Run Locally
-
-```bash
-npm run dev
-```
-
-Visit:
-- **App**: http://localhost:3000
-- **Signup**: http://localhost:3000/signup
-- **Login**: http://localhost:3000/login
-
-
----
-
-## 🧪 TODO / Task List
-
-### Backend
-
-- [ ] Prisma schema & migrations
-- [ ] LeetCode data fetcher
-- [ ] Snapshot collection cron job
-- [ ] Analytics APIs
-- [ ] Error handling & logging
+| Runtime | Node.js via Bun |
+| Framework | Next.js 16 (App Router), React 19 |
+| Database | PostgreSQL 16 |
+| ORM | Prisma 7 (generated to `src/generated/prisma`) |
+| Auth | NextAuth v5 (Google OAuth) |
+| Styling | Tailwind CSS 4, shadcn/ui |
+| Charts | Recharts 2 |
+| Validation | Zod 4 |
+| Rate Limiting | Upstash Redis + @upstash/ratelimit |
+| Cron | Vercel Cron Jobs |
+| Testing | Jest 30, React Testing Library |
+| Deployment | Vercel |
+
+## Setup
+
+### Prerequisites
+
+- Bun 1.x or Node.js 20+
+- PostgreSQL 16
+- Docke Stack
+
+<div align="center">
 
 ### Frontend
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-- [ ] Dashboard layout
-- [ ] Leaderboard table
-- [ ] Gainers & inactive views
-- [ ] Sorting & filtering
-- [ ] Export utilities
+### Backend
+![Bun](https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma_7-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Zod](https://img.shields.io/badge/Zod_4-3E67B1?style=for-the-badge&logo=zod&logoColor=white)
 
 ### Infrastructure
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+**Prerequisites**: Bun 1.x / Node.js 20+ • PostgreSQL 16 • Docker (optional) • Google OAuth credentials
 
-- [ ] Cron setup
-- [ ] Production database
-- [ ] Rate-limit protection
+### Quick Start
 
----
+1. **Clone and install**
+Wait for health check to pass:
 
-## 🚧 Known Challenges
+```bash
+docker-compose ps
+# postgres should show "healthy"
+```
 
-- LeetCode does not provide an official public API
-- Rate limiting & scraping protection
-- Username changes
-- Timezone consistency for daily snapshots
+3. sh
+git clone <repository-url> && cd leetgrind && bun install
+```
 
----
+2. **Start PostgreSQL**:
 
-## 🌱 Future Enhancements
+```sh
+docker-compose up -d  # Wait for "healthy" status
+```
 
-- Multiple groups / cohorts
-- WhatsApp / Discord bot integration
-- Weekly automated summaries
-- Streak tracking
-- Difficulty-wise analytics
-- Public shareable leaderboards
+3. **Configure environment** (`cp .env.example .env`):
 
----
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/leetgrind"
+NEXTAUTH_SECRET="<openssl rand -base64 32>"
+GOOGLE_CLIENT_ID="<from Google Cloud Console>"
+GOOGLE_CLIENT_SECRET="<from Google Cloud Console>"
+CRON_SECRET="<openssl rand -base64 32>"
+```
 
-## 🤝 Contributing
+4. **Setup database**:
 
-Pull requests are welcome.  
-Please open an issue before making major changes.
+```sh
+bunx prisma generate && bunx prisma migrate deploy
+```
 
----
+5. **Run**:
 
-## ⭐ Why This Project Matters
+```sh
+bun run dev  # → http://localhost:3000
+```
+### Production Deployment (Vercel)
 
-This project demonstrates:
+1. Push repository to GitHub/GitLab/Bitbucket
+2. Import project to Vercel
+3. Configure environment variables in Vercel dashboard (same as `.env`)
+4. Ensure `CRON_SECRET` is set (required even though Vercel uses `x-vercel-cron` header)
+5. Deploy (Vercel automatically detects `vercel.json` cron configuration)
 
-- Time-series data modeling
-- Backend analytics & cron jobs
-- Clean Next.js API design
-- Modern tooling with Bun
-- Real-world product thinking
+Cron jobs authenticate automatically via `x-vercel-cron: 1` header in production.
 
----
+## Testing
 
-## 📄 License
+```bash
+# All tests (unit + API integration, excludes database tests)
+bun test
 
-MIT
+# Unit tests only
+bun run test:unit
 
----
+# Database integration tests (requires DATABASE_URL)
+bun run test:db
 
-**Built with ❤️ and Bun**
+# Watch mode
+bun run test:watch
+
+# CoOAuth Setup
+
+Google Cloud Console → Create OAuth 2.0 credentials → Add redirect URI: `http://localhost:3000/api/auth/callback/google`
+
+### Test Cron Locally
+
+```sh
+cursh
+bun test             # Unit + API integration
+bun run test:db      # Database tests (requires DATABASE_URL)
+bun run test:watch   # Watch mode
+```
+Tradeoff: Less flexibility for external API consumers (not RESTful).
+
+### JSON Column Storage
+
+`LeaderboardSnapshot.snapshotData` stores denormalized daily rankings as JSON. This:
+- Eliminates complex joins for historical queries
+- Reduces query latency (single row read vs N-way join)
+- Simplifies schema (no separate `LeaderboardEntry` table)
+
+Tradeoff: JSON validation must be enforced at application layer (via Zod schemas).
+
+### Optional Rate Limiting
+
+Rate limiting disabled by default to reduce infrastructure costs (Upstash Redis free tier: 10K requests/day). Recommended thresholds for enabling:
+- \>500 users: Enable to prevent abuse
+- Public deployment: Enable immediately
+- Single-team use: Optional
+
+### Generated Prisma Location
+| Decision | Rationale | Tradeoff |
+|----------|-----------|----------|
+| **Immutable Snapshots** | Never update `DailyStat` records; preserves historical accuracy, simplifies concurrency | ~1KB/profile/day storage (365MB/year for 1K profiles) |
+| **Batch Processing** | 5 concurrent + 1s delay avoids LeetCode IP bans | Processes 100 profiles in ~25 seconds |
+| **Server Actions** | Type-safe, auto-deduplication, less boilerplate | Less flexible for external API consumers |
+| **JSON Snapshots** | Single-row queries instead of complex joins | Requires Zod validation at app layer |
+| **Optional Rate Limiting** | Free tier friendly (Upstash 10K req/day) | Enable for >500 users or public deployments |- **No Official LeetCode API**: Relies on undocumented GraphQL endpoint
+- **Username Changes**: Break historical tracking (no UUID identity)
+- **UTC Normalization**: Snapshots at midnight UTC (timezone-dependent)
+- **Daily Updates Only**: No realtime stats (24h refresh cycle)
+
+## Scalability
+
+| Metric | Bottleneck | Mitigation |
+|--------|------------|------------|
+| DB Connections | ~50 concurrent | Add `?connection_limit=20` |
+| Cron Timeout | 10 min (Vercel) | Shard by profile ID range |
+| Storage | Multi-TB limit | Archive old snapshots (>90d) to S3 |
+
+## Roadmap
+
+- [ ] Multi-provider auth (GitHub, Discord)
+- [ ] Webhook notifications (Slack/Discord)
+- [ ] Streak tracking
+- [ ] Difficulty-specific leaderboards
+- [ ] Public embeddable leaderboard---
+
+<div align="center">
+
+**[⭐ Star on GitHub](https://github.com/yourusername/leetgrind)** • **[📖 Documentation](./TESTING.md)** • **[🐛 Report Bug](https://github.com/yourusername/leetgrind/issues)**
+
+MIT License • Built with Bun & Next.js
+
+</div>
