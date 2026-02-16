@@ -1,5 +1,3 @@
-<div align="center">
-
 # 🎯 LeetGrind
 
 **Competitive LeetCode Progress Tracking for Teams**
@@ -10,37 +8,26 @@
 [![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?style=flat&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-</div>
-
-[Features](#features) • [Architecture](#architecture) • [Tech Stack](#tech-stack) • [Setup](#setup) • [Deployment](#deployment)
+[Features](#features) • [Tech Stack](#tech-stack) • [Setup](#setup) • [Deployment](#deployment)
 
 ---
 
 ## What is LeetGrind?
 
-```mermaid
-flowchart TD
-    A[Vercel Cron<br/>00:00 UTC] -->|Trigger| B[API Route]
-    B --> C{Find Profiles<br/>Missing Stats}
-    C --> D[Batch Fetch<br/>LeetCode API]
-    D -->|5 concurrent<br/>1s delay| E[GraphQL Queries]
-    E --> F[Calculate<br/>Ranking Points]
-    F --> G[(PostgreSQL<br/>DailyStat)]
-    G --> H[Generate<br/>Snapshots]
-    H --> I[(JSON Blobs<br/>LeaderboardSnapshot)]
-```
+LeetGrind is a competitive progress tracking platform for LeetCode teams. It automatically fetches daily statistics, calculates ranking points, and generates leaderboard snapshots for groups.
 
-### Data Model
+### Key Features
 
-Immutable append-only architecture:
+- **Automated Daily Updates**: Vercel cron jobs fetch LeetCode stats at midnight UTC
+- **Team Leaderboards**: Track progress across groups with 5+ members
+- **Immutable History**: Append-only architecture preserves complete statistical history
+- **Smart Scoring**: Weighted algorithm considering problem difficulty, total solved, and global rank
+- **Google OAuth**: Secure authentication via NextAuth v5
 
-```
-User (1:N) Group (1:N) GroupMember (N:1) LeetcodeProfile (1:N) DailyStat
-                                         Group (1:N) LeaderboardSnapshot
-```
+## Architecture
+<img width="2603" height="1804" alt="leetgrind" src="https://github.com/user-attachments/assets/c1c4f7f2-99c2-408f-9bd6-5a8cbdf26a25" />
 
-**DailyStat** (never updated): Daily record per profile with problems solved, global rank, contest rating, computed points  
-**LeaderboardSnapshot** (JSON): Daily group standings when size ≥ 5
+
 
 ### Key Components
 
@@ -51,14 +38,6 @@ User (1:N) Group (1:N) GroupMember (N:1) LeetcodeProfile (1:N) DailyStat
 | **Rate Limiting** | Upstash Redis sliding window (optional, disabled by default) |
 | **Batch Processing** | 5 concurrent requests, 1s inter-batch delay, 5s timeout |
 | **Scoring** | `(total×10) + (easy×1) + (med×3) + (hard×5) + max(0, 5M-rank)/1000` |
-
-Upstash Redis-backed sliding window rate limits:
-- Page routes: 60 req/60s
-- API routes: 30 req/60s
-- Server actions: 20 req/60s
-- Auth endpoints: 10 req/60s
-
-Disabled by default (`ENABLE_RATE_LIMIT=false`).
 
 ### Scoring Algorithm
 
@@ -76,6 +55,22 @@ Leaderboard sorted by:
 3. Username (alphabetical, stability)
 
 ## Technology Stack
+
+### Frontend
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
+### Backend
+![Bun](https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma_7-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Zod](https://img.shields.io/badge/Zod_4-3E67B1?style=for-the-badge&logo=zod&logoColor=white)
+
+### Infrastructure
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 | Layer | Technology |
 |-------|-----------|
@@ -101,44 +96,25 @@ Leaderboard sorted by:
 - Docker (optional)
 - Google OAuth credentials
 
-### Frontend
-![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white)
-![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-
-### Backend
-![Bun](https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma_7-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-![Zod](https://img.shields.io/badge/Zod_4-3E67B1?style=for-the-badge&logo=zod&logoColor=white)
-
-### Infrastructure
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-
 ### Quick Start
 
-1. **Clone and install**
+1. **Clone and install**:
 
 ```bash
-git clone <repository-url> && cd leetgrind && bun install
+git clone <repository-url>
+cd leetgrind
+bun install
 ```
 
 2. **Start PostgreSQL**:
 
-```sh
-docker-compose up -d  # Wait for "healthy" status
-```
-
-Wait for health check to pass:
-
 ```bash
+docker-compose up -d
+# Wait for "healthy" status
 docker-compose ps
-# postgres should show "healthy"
 ```
 
-3. **Configure environment** (`cp .env.example .env`):
+3. **Configure environment** (copy `.env.example` to `.env`):
 
 ```env
 DATABASE_URL="postgresql://postgres:password@localhost:5432/leetgrind"
@@ -150,17 +126,26 @@ CRON_SECRET="<openssl rand -base64 32>"
 
 4. **Setup database**:
 
-```sh
-bunx prisma generate && bunx prisma migrate deploy
+```bash
+bunx prisma generate
+bunx prisma migrate deploy
 ```
 
-5. **Run**:
+5. **Run development server**:
 
-```sh
-bun run dev  # → http://localhost:3000
+```bash
+bun run dev
+# → http://localhost:3000
 ```
 
-### Production Deployment (Vercel)
+### Google OAuth Setup
+
+1. Go to Google Cloud Console
+2. Create OAuth 2.0 credentials
+3. Add redirect URI: `http://localhost:3000/api/auth/callback/google`
+4. Copy Client ID and Client Secret to `.env`
+
+## Production Deployment (Vercel)
 
 1. Push repository to GitHub/GitLab/Bitbucket
 2. Import project to Vercel
@@ -173,7 +158,7 @@ Cron jobs authenticate automatically via `x-vercel-cron: 1` header in production
 ## Testing
 
 ```bash
-# All tests (unit + API integration, excludes database tests)
+# All tests (unit + API integration)
 bun test
 
 # Unit tests only
@@ -184,20 +169,20 @@ bun run test:db
 
 # Watch mode
 bun run test:watch
+
+# Coverage
+bun run test:coverage
 ```
-
-### OAuth Setup
-
-Google Cloud Console → Create OAuth 2.0 credentials → Add redirect URI: `http://localhost:3000/api/auth/callback/google`
 
 ### Test Cron Locally
 
-```sh
-curl -X POST http://localhost:3000/api/cron/daily-stats \
+```bash
+curl -X POST http://localhost:3000/api/cron/update-stats \
   -H "Authorization: Bearer ${CRON_SECRET}"
 ```
 
 ## Architecture Decisions
+
 
 | Decision | Rationale | Tradeoff |
 |----------|-----------|----------|
@@ -218,7 +203,7 @@ curl -X POST http://localhost:3000/api/cron/daily-stats \
 
 | Metric | Bottleneck | Mitigation |
 |--------|------------|------------|
-| DB Connections | ~50 concurrent | Add `?connection_limit=20` |
+| DB Connections | ~50 concurrent | Add `?connection_limit=20` to `DATABASE_URL` |
 | Cron Timeout | 10 min (Vercel) | Shard by profile ID range |
 | Storage | Multi-TB limit | Archive old snapshots (>90d) to S3 |
 
@@ -228,7 +213,7 @@ curl -X POST http://localhost:3000/api/cron/daily-stats \
 - [ ] Webhook notifications (Slack/Discord)
 - [ ] Streak tracking
 - [ ] Difficulty-specific leaderboards
-- [ ] Public embeddable leaderboard
+- [ ] Public embeddable leaderboard widgets
 
 ---
 
