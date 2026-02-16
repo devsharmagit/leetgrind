@@ -21,13 +21,20 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // ✅ SECURITY FIX: Validate Authorization header, not x-vercel-cron
+  // Verify request is from Vercel Cron or authorized source
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  
+  // Check if request is from Vercel Cron (production)
+  const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+  
+  // Check if request has valid authorization header (for manual testing)
+  const hasValidAuth = authHeader === `Bearer ${cronSecret}`;
+  
+  if (!isVercelCron && !hasValidAuth) {
     console.warn('[CRON] Unauthorized GET attempt', {
+      hasVercelCronHeader: !!request.headers.get('x-vercel-cron'),
       hasAuthHeader: !!authHeader,
-      hasVercelCronHeader: request.headers.get('x-vercel-cron') === '1',
-      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
     return NextResponse.json(
       { error: 'Unauthorized' },
@@ -35,7 +42,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  console.log('[CRON] Request authenticated via Bearer token');
+  console.log('[CRON] Request authenticated:', {
+    source: isVercelCron ? 'Vercel Cron' : 'Manual (with secret)',
+  });
+  
   return handleDailyStats();
 }
 // for manual testing
@@ -50,10 +60,18 @@ export async function POST(request: NextRequest) {
   }
 
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  
+  // Check if request is from Vercel Cron (production)
+  const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+  
+  // Check if request has valid authorization header (for manual testing)
+  const hasValidAuth = authHeader === `Bearer ${cronSecret}`;
+  
+  if (!isVercelCron && !hasValidAuth) {
     console.warn('[CRON] Unauthorized POST attempt', {
+      hasVercelCronHeader: !!request.headers.get('x-vercel-cron'),
       hasAuthHeader: !!authHeader,
-      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
     return NextResponse.json(
       { error: 'Unauthorized' },
@@ -61,7 +79,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log('[CRON] Request authenticated via Bearer token');
+  console.log('[CRON] Request authenticated:', {
+    source: isVercelCron ? 'Vercel Cron' : 'Manual (with secret)',
+  });
+  
   return handleDailyStats();
 }
 
