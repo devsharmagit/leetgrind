@@ -10,9 +10,9 @@
 [![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?style=flat&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-[Features](#features) • [Architecture](#architecture) • [Tech Stack](#tech-stack) • [Setup](#setup) • [Deployment](#deployment)
-
 </div>
+
+[Features](#features) • [Architecture](#architecture) • [Tech Stack](#tech-stack) • [Setup](#setup) • [Deployment](#deployment)
 
 ---
 
@@ -98,9 +98,8 @@ Leaderboard sorted by:
 
 - Bun 1.x or Node.js 20+
 - PostgreSQL 16
-- Docke Stack
-
-<div align="center">
+- Docker (optional)
+- Google OAuth credentials
 
 ### Frontend
 ![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white)
@@ -117,19 +116,12 @@ Leaderboard sorted by:
 ### Infrastructure
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-**Prerequisites**: Bun 1.x / Node.js 20+ • PostgreSQL 16 • Docker (optional) • Google OAuth credentials
 
 ### Quick Start
 
 1. **Clone and install**
-Wait for health check to pass:
 
 ```bash
-docker-compose ps
-# postgres should show "healthy"
-```
-
-3. sh
 git clone <repository-url> && cd leetgrind && bun install
 ```
 
@@ -137,6 +129,13 @@ git clone <repository-url> && cd leetgrind && bun install
 
 ```sh
 docker-compose up -d  # Wait for "healthy" status
+```
+
+Wait for health check to pass:
+
+```bash
+docker-compose ps
+# postgres should show "healthy"
 ```
 
 3. **Configure environment** (`cp .env.example .env`):
@@ -160,6 +159,7 @@ bunx prisma generate && bunx prisma migrate deploy
 ```sh
 bun run dev  # → http://localhost:3000
 ```
+
 ### Production Deployment (Vercel)
 
 1. Push repository to GitHub/GitLab/Bitbucket
@@ -184,45 +184,32 @@ bun run test:db
 
 # Watch mode
 bun run test:watch
+```
 
-# CoOAuth Setup
+### OAuth Setup
 
 Google Cloud Console → Create OAuth 2.0 credentials → Add redirect URI: `http://localhost:3000/api/auth/callback/google`
 
 ### Test Cron Locally
 
 ```sh
-cursh
-bun test             # Unit + API integration
-bun run test:db      # Database tests (requires DATABASE_URL)
-bun run test:watch   # Watch mode
+curl -X POST http://localhost:3000/api/cron/daily-stats \
+  -H "Authorization: Bearer ${CRON_SECRET}"
 ```
-Tradeoff: Less flexibility for external API consumers (not RESTful).
 
-### JSON Column Storage
+## Architecture Decisions
 
-`LeaderboardSnapshot.snapshotData` stores denormalized daily rankings as JSON. This:
-- Eliminates complex joins for historical queries
-- Reduces query latency (single row read vs N-way join)
-- Simplifies schema (no separate `LeaderboardEntry` table)
-
-Tradeoff: JSON validation must be enforced at application layer (via Zod schemas).
-
-### Optional Rate Limiting
-
-Rate limiting disabled by default to reduce infrastructure costs (Upstash Redis free tier: 10K requests/day). Recommended thresholds for enabling:
-- \>500 users: Enable to prevent abuse
-- Public deployment: Enable immediately
-- Single-team use: Optional
-
-### Generated Prisma Location
 | Decision | Rationale | Tradeoff |
 |----------|-----------|----------|
 | **Immutable Snapshots** | Never update `DailyStat` records; preserves historical accuracy, simplifies concurrency | ~1KB/profile/day storage (365MB/year for 1K profiles) |
 | **Batch Processing** | 5 concurrent + 1s delay avoids LeetCode IP bans | Processes 100 profiles in ~25 seconds |
 | **Server Actions** | Type-safe, auto-deduplication, less boilerplate | Less flexible for external API consumers |
 | **JSON Snapshots** | Single-row queries instead of complex joins | Requires Zod validation at app layer |
-| **Optional Rate Limiting** | Free tier friendly (Upstash 10K req/day) | Enable for >500 users or public deployments |- **No Official LeetCode API**: Relies on undocumented GraphQL endpoint
+| **Optional Rate Limiting** | Free tier friendly (Upstash 10K req/day) | Enable for >500 users or public deployments |
+
+## Known Limitations
+
+- **No Official LeetCode API**: Relies on undocumented GraphQL endpoint
 - **Username Changes**: Break historical tracking (no UUID identity)
 - **UTC Normalization**: Snapshots at midnight UTC (timezone-dependent)
 - **Daily Updates Only**: No realtime stats (24h refresh cycle)
@@ -241,12 +228,10 @@ Rate limiting disabled by default to reduce infrastructure costs (Upstash Redis 
 - [ ] Webhook notifications (Slack/Discord)
 - [ ] Streak tracking
 - [ ] Difficulty-specific leaderboards
-- [ ] Public embeddable leaderboard---
+- [ ] Public embeddable leaderboard
 
-<div align="center">
+---
 
 **[⭐ Star on GitHub](https://github.com/yourusername/leetgrind)** • **[📖 Documentation](./TESTING.md)** • **[🐛 Report Bug](https://github.com/yourusername/leetgrind/issues)**
 
 MIT License • Built with Bun & Next.js
-
-</div>
