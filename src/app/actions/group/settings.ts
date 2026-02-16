@@ -5,11 +5,13 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkActionRateLimit } from "@/lib/rate-limit";
+import { ActionResult } from "@/lib/types/action-result";
+import type { Group } from "@/generated/prisma/client";
 
 export async function updateGroupSettings(
   groupId: number,
   settings: { name?: string; visibility?: "UNLISTED" | "PRIVATE" }
-) {
+): Promise<ActionResult<Group>> {
   const rateLimited = await checkActionRateLimit("updateGroup");
   if (rateLimited) return rateLimited;
 

@@ -78,33 +78,31 @@ export function getIP(headers: Headers): string {
  * Automatically resolves userId for authenticated users, falls back to IP.
  * Returns `null` if allowed, or an error response object if rate-limited.
  */
+
 export async function checkActionRateLimit(
-  actionName: string
+  actionName: string,
+  session?: { user?: { id?: string } } | null
 ): Promise<{ success: false; error: string } | null> {
-  if (!isRateLimitEnabled()) return null
+  if (!isRateLimitEnabled()) return null;
 
-  // Prefer userId for authenticated users, fall back to IP
-  const { auth } = await import("@/auth")
-  const session = await auth()
-
-  let key: string
+  let key: string;
   if (session?.user?.id) {
-    key = `uid:${session.user.id}:action:${actionName}`
+    key = `uid:${session.user.id}:action:${actionName}`;
   } else {
-    const { headers } = await import("next/headers")
-    const hdrs = await headers()
-    const ip = getIP(hdrs)
-    key = `ip:${ip}:action:${actionName}`
+    const { headers } = await import("next/headers");
+    const hdrs = await headers();
+    const ip = getIP(hdrs);
+    key = `ip:${ip}:action:${actionName}`;
   }
 
-  const { success } = await actionLimiter().limit(key)
+  const { success } = await actionLimiter().limit(key);
 
   if (!success) {
     return {
       success: false,
       error: "Too many requests. Please slow down and try again.",
-    }
+    };
   }
 
-  return null
+  return null;
 }

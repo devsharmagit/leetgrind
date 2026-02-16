@@ -1,241 +1,54 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { checkActionRateLimit } from "@/lib/rate-limit";
-import { snapshotDataSchema, topGainersSchema } from "@/lib/schema/leaderboard"
-import { Prisma } from "@/generated/prisma/client";
+import { ActionResult } from "@/lib/types/action-result";
+import { fetchLeetCodeStats, type LeetCodeStats } from "@/lib/batch-fetch";
+import { sortLeaderboard } from "@/lib/leaderboard-sort";
+import type { LeaderboardSnapshot, LeetcodeProfile, DailyStat } from "@/generated/prisma/client";
 
-interface LeetCodeStats {
+export { fetchLeetCodeStats, type LeetCodeStats };
+
+// Return types for leaderboard functions
+export type LeaderboardEntry = {
   username: string;
-  realName: string | null;
   ranking: number;
   totalSolved: number;
   easySolved: number;
   mediumSolved: number;
   hardSolved: number;
   contestRating: number;
-}
+  rankingPoints: number;
+  lastUpdated: Date | null;
+};
 
-// GraphQL query to fetch user stats from LeetCode
-const LEETCODE_STATS_QUERY = `
-  query userPublicProfile($username: String!) {
-    matchedUser(username: $username) {
-      username
-      profile {
-        realName
-        ranking
-      }
-      submitStatsGlobal {
-        acSubmissionNum {
-          difficulty
-          count
-        }
-      }
-    }
-    userContestRanking(username: $username) {
-      rating
-    }
-  }
-`;
+export type GainerEntry = {
+  username: string;
+  problemsGained: number;
+  rankImproved: number;
+  currentSolved: number;
+  currentRank: number;
+};
 
-export async function fetchLeetCodeStats(username: string): Promise<LeetCodeStats | null> {
-  try {
-    const response = await fetch('https://leetcode.com/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: LEETCODE_STATS_QUERY,
-        variables: { username },
-      }),
-      next: { revalidate: 0 }, // Don't cache
-    });
+export type RefreshStatsResult = {
+  username: string;
+  status: 'success' | 'error';
+  message: string;
+};
 
-    if (!response.ok) {
-      console.error(`Failed to fetch stats for ${username}: ${response.status}`);
-      return null;
-    }
+type ProfileWithStats = LeetcodeProfile & {
+  stats: DailyStat[];
+};
 
-    const data = await response.json();
-    
-    if (!data.data?.matchedUser) {
-      return null;
-    }
+type PublicLeaderboardMeta = {
+  groupName: string;
+  ownerName: string;
+  memberCount: number;
+  lastSnapshotDate: Date | null;
+};
 
-    const user = data.data.matchedUser;
-    const submissions = user.submitStatsGlobal?.acSubmissionNum || [];
-    
-    let easySolved = 0;
-    let mediumSolved = 0;
-    let hardSolved = 0;
-    let totalSolved = 0;
 
-    for (const sub of submissions) {
-      if (sub.difficulty === 'Easy') easySolved = sub.count;
-      else if (sub.difficulty === 'Medium') mediumSolved = sub.count;
-      else if (sub.difficulty === 'Hard') hardSolved = sub.count;
-      else if (sub.difficulty === 'All') totalSolved = sub.count;
-    }
-
-    return {
-      username: user.username,
-      realName: user.profile?.realName || null,
-      ranking: user.profile?.ranking || 5000000,
-      totalSolved,
-      easySolved,
-      mediumSolved,
-      hardSolved,
-      contestRating: Math.round(data.data.userContestRanking?.rating || 0),
-    };
-  } catch (error) {
-    console.error(`Error fetching stats for ${username}:`, error);
-    return null;
-  }
-}
-
-export async function refreshGroupStats(groupId: number) {
-  const rateLimited = await checkActionRateLimit('refreshStats');
-  if (rateLimited) return rateLimited;
-
-  const session = await auth();
-  
-  if (!session?.user?.email) {
-    return { success: false, error: 'Unauthorized. Please log in.' };
-  }
-
-  try {
-    // Find the user
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return { success: false, error: 'User not found' };
-    }
-
-    // Get all members of the group
-    const group = await prisma.group.findUnique({
-      where: { id: groupId },
-      include: {
-        members: {
-          include: {
-            leetcodeProfile: true,
-          },
-        },
-      },
-    });
-
-    if (!group) {
-      return { success: false, error: 'Group not found' };
-    }
-
-    // OWNERSHIP CHECK: Only allow access if user is the owner
-    if (group.ownerId !== user.id) {
-      return { success: false, error: 'Access denied. You can only refresh stats for groups you own.' };
-    }
-
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-
-    const results: Array<{
-      username: string;
-      status: 'success' | 'error';
-      message: string;
-    }> = [];
-
-    // Fetch stats for each member
-    for (const member of group.members) {
-      const username = member.leetcodeProfile.username;
-      
-      try {
-        const stats = await fetchLeetCodeStats(username);
-        
-        if (!stats) {
-          results.push({
-            username,
-            status: 'error',
-            message: 'Failed to fetch stats',
-          });
-          continue;
-        }
-
-        // Calculate ranking points (custom scoring)
-        // Higher solved = more points, lower rank = more points
-        const rankingPoints = Math.max(0, 
-          stats.totalSolved * 10 + 
-          stats.easySolved * 1 + 
-          stats.mediumSolved * 3 + 
-          stats.hardSolved * 5 +
-          Math.max(0, 5000000 - stats.ranking) / 1000
-        );
-
-        // Upsert daily stat
-        await prisma.dailyStat.upsert({
-          where: {
-            leetcodeProfileId_date: {
-              leetcodeProfileId: member.leetcodeProfile.id,
-              date: today,
-            },
-          },
-          update: {
-            totalSolved: stats.totalSolved,
-            easySolved: stats.easySolved,
-            mediumSolved: stats.mediumSolved,
-            hardSolved: stats.hardSolved,
-            ranking: stats.ranking,
-            contestRating: stats.contestRating,
-            rankingPoints: Math.round(rankingPoints),
-          },
-          create: {
-            leetcodeProfileId: member.leetcodeProfile.id,
-            date: today,
-            totalSolved: stats.totalSolved,
-            easySolved: stats.easySolved,
-            mediumSolved: stats.mediumSolved,
-            hardSolved: stats.hardSolved,
-            ranking: stats.ranking,
-            contestRating: stats.contestRating,
-            rankingPoints: Math.round(rankingPoints),
-          },
-        });
-
-        results.push({
-          username,
-          status: 'success',
-          message: `Rank: ${stats.ranking.toLocaleString()}, Solved: ${stats.totalSolved}`,
-        });
-      } catch (error) {
-        console.error(`Error processing ${username}:`, error);
-        results.push({
-          username,
-          status: 'error',
-          message: 'Processing error',
-        });
-      }
-
-      // Add a small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-
-    revalidatePath(`/dashboard/groups/${groupId}`);
-    
-    const successCount = results.filter(r => r.status === 'success').length;
-    
-    return { 
-      success: true, 
-      results,
-      message: `Updated ${successCount} of ${group.members.length} members`,
-    };
-  } catch (error) {
-    console.error('Error refreshing group stats:', error);
-    return { success: false, error: 'Failed to refresh stats' };
-  }
-}
-
-export async function getGroupLeaderboard(groupId: number) {
+export async function getGroupLeaderboard(groupId: number): Promise<ActionResult<LeaderboardEntry[], { lastSnapshotDate: Date | null }>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -320,21 +133,7 @@ export async function getGroupLeaderboard(groupId: number) {
       };
     });
 
-    // Sort by rankingPoints (descending - higher is better)
-    // Tie-breaker 1: ranking (ascending - lower is better)
-    // Tie-breaker 2: username (alphabetical for stability)
-    leaderboard.sort((a, b) => {
-      // Primary: rankingPoints (descending)
-      if (b.rankingPoints !== a.rankingPoints) {
-        return b.rankingPoints - a.rankingPoints;
-      }
-      // Tie-breaker 1: ranking (ascending)
-      if (a.ranking !== b.ranking) {
-        return a.ranking - b.ranking;
-      }
-      // Tie-breaker 2: username (alphabetical)
-      return a.username.localeCompare(b.username);
-    });
+    sortLeaderboard(leaderboard);
 
     return { 
       success: true, 
@@ -347,7 +146,7 @@ export async function getGroupLeaderboard(groupId: number) {
   }
 }
 
-export async function getGroupGainers(groupId: number, days: number = 7) {
+export async function getGroupGainers(groupId: number, days: number = 7): Promise<ActionResult<GainerEntry[], { allMembers: GainerEntry[] }>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -478,7 +277,11 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
     // Filter to only those who gained
     const activeGainers = gainers.filter(g => g.problemsGained > 0);
 
-    return { success: true, data: activeGainers, allMembers: gainers };
+    return { 
+      success: true, 
+      data: activeGainers,
+      allMembers: gainers,
+    };
   } catch (error) {
     console.error('Error getting gainers:', error);
     return { success: false, error: 'Failed to get gainers' };
@@ -486,130 +289,7 @@ export async function getGroupGainers(groupId: number, days: number = 7) {
 }
 
 
-export async function saveLeaderboardSnapshot(groupId: number) {
-  const rateLimited = await checkActionRateLimit("saveSnapshot");
-  if (rateLimited) return rateLimited;
-
-  const session = await auth();
-
-  if (!session?.user?.email) {
-    return { success: false, error: "Unauthorized. Please log in." };
-  }
-
-  try {
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return { success: false, error: "User not found" };
-    }
-
-    // Get group + member count
-    const group = await prisma.group.findUnique({
-      where: { id: groupId },
-      include: {
-        _count: {
-          select: { members: true },
-        },
-      },
-    });
-
-    if (!group) {
-      return { success: false, error: "Group not found" };
-    }
-
-    // Ownership check
-    if (group.ownerId !== user.id) {
-      return {
-        success: false,
-        error: "Access denied. You can only save snapshots for groups you own.",
-      };
-    }
-
-    // Require minimum members
-    if (group._count.members < 5) {
-      return {
-        success: false,
-        error:
-          "Cannot save snapshot: Group must have at least 5 members to create leaderboard snapshots",
-      };
-    }
-
-    // Get current leaderboard + gainers
-    const leaderboardResult = await getGroupLeaderboard(groupId);
-    const gainersResult = await getGroupGainers(groupId, 7);
-
-    if (!leaderboardResult.success || !leaderboardResult.data) {
-      return { success: false, error: "Failed to get leaderboard data" };
-    }
-
-    // ──────────────────────────────────────────────
-    // ZOD VALIDATION (CRITICAL HARDENING)
-    // ──────────────────────────────────────────────
-
-    const validatedSnapshot = snapshotDataSchema.parse(
-      leaderboardResult.data
-    );
-
-    const validatedGainers = topGainersSchema.parse(
-      gainersResult.success ? gainersResult.data : null
-    );
-
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-
-    // Save snapshot (upsert)
-    await prisma.leaderboardSnapshot.upsert({
-      where: {
-        groupId_date: {
-          groupId,
-          date: today,
-        },
-      },
-      update: {
-        snapshotData: validatedSnapshot,
-        topGainers:
-  validatedGainers === null
-    ? Prisma.JsonNull
-    : validatedGainers,
-      },
-      create: {
-        groupId,
-        date: today,
-        snapshotData: validatedSnapshot,
-         topGainers:
-  validatedGainers === null
-    ? Prisma.JsonNull
-    : validatedGainers,
-      },
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error saving leaderboard snapshot:", error);
-
-    return {
-      success: false,
-      error: "Failed to save snapshot",
-    };
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-export async function getLeaderboardHistory(groupId: number, days: number = 30) {
+export async function getLeaderboardHistory(groupId: number, days: number = 30): Promise<ActionResult<LeaderboardSnapshot[]>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -662,7 +342,7 @@ export async function getLeaderboardHistory(groupId: number, days: number = 30) 
   }
 }
 
-export async function getProfileHistory(username: string, days: number = 30) {
+export async function getProfileHistory(username: string, days: number = 30): Promise<ActionResult<ProfileWithStats>> {
   const session = await auth();
   
   if (!session?.user?.email) {
@@ -670,8 +350,26 @@ export async function getProfileHistory(username: string, days: number = 30) {
   }
 
   try {
-    const profile = await prisma.leetcodeProfile.findUnique({
-      where: { username },
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    // Check if profile exists and user has access in one query
+    const profile = await prisma.leetcodeProfile.findFirst({
+      where: {
+        username,
+        groups: {
+          some: {
+            group: {
+              ownerId: user.id,
+            },
+          },
+        },
+      },
       include: {
         stats: {
           orderBy: { date: 'desc' },
@@ -681,7 +379,10 @@ export async function getProfileHistory(username: string, days: number = 30) {
     });
 
     if (!profile) {
-      return { success: false, error: 'Profile not found' };
+      return { 
+        success: false, 
+        error: 'Profile not found or you do not have access to it.' 
+      };
     }
 
     return { success: true, data: profile };
@@ -695,7 +396,7 @@ export async function getProfileHistory(username: string, days: number = 30) {
 // Public (no-auth) leaderboard actions
 // ──────────────────────────────────────────────
 
-export async function getPublicLeaderboard(publicId: string) {
+export async function getPublicLeaderboard(publicId: string): Promise<ActionResult<LeaderboardEntry[], PublicLeaderboardMeta>> {
   try {
     const group = await prisma.group.findUnique({
       where: { publicId },
@@ -790,7 +491,7 @@ export async function getPublicLeaderboard(publicId: string) {
   }
 }
 
-export async function getPublicGainers(publicId: string, days: number = 7) {
+export async function getPublicGainers(publicId: string, days: number = 7): Promise<ActionResult<GainerEntry[]>> {
   try {
     const group = await prisma.group.findUnique({
       where: { publicId },
