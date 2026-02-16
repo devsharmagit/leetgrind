@@ -392,7 +392,7 @@ async function createGroupSnapshot(groupId: number, date: Date): Promise<void> {
     .filter((g): g is NonNullable<typeof g> => g !== null)
     .sort((a, b) => b.problemsGained - a.problemsGained);
   
-  // ✅ FIX #2: Validate data with Zod schemas (same as saveLeaderboardSnapshot action)
+
   try {
     const validatedSnapshot = snapshotDataSchema.parse(leaderboard);
     const validatedGainers = topGainersSchema.parse(
